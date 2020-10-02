@@ -1,11 +1,9 @@
 import gym
 from gym import spaces
 from gym.utils import seeding
-import numpy as np
-
 
 # things to do for each env:
-#   - step, reset and seed functions
+#   - step, reset functions, seed
 #   - action_space, reward_range
 # things I skipped:
 #   - render function
@@ -14,19 +12,21 @@ import numpy as np
 
 class BairdsCounterExample(gym.Env):
     action_space = spaces.Discrete(2)
+    reward_range = (0, 0)
 
     def __init__(self):
         self.n_states = 7
+        self.seed()
     
     def reset(self):
-        self.current = np.random.choice(np.arange(0, 6))
+        self.current = self.np_random.choice(range(0, 6))
         return self.current 
     
     def step(self, action):
         if action == 1:
             self.current = 6
         elif action == 0:
-            self.current = np.random.choice(np.arange(0, 6))
+            self.current = self.np_random.choice(range(0, 6))
         done = False
         return self.current, 0, done, ""
 
@@ -36,10 +36,12 @@ class BairdsCounterExample(gym.Env):
 
 class ASplit(gym.Env):
     action_space = spaces.Discrete(1)
+    reward_range = (0, 1)
 
     def __init__(self):
         # A,B,C + Terminal
         self.n_states = 4
+        self.seed()
     
     def reset(self):
         self.current = 0
@@ -51,7 +53,7 @@ class ASplit(gym.Env):
         # if state is A
         if self.current == 0:
             # choose randomly between states 1 and 2
-            self.current = np.random.choice([1, 2])
+            self.current = self.np_random.choice([1, 2])
             done = False
             r = 0
         # if state is B
@@ -77,6 +79,7 @@ class ASplit(gym.Env):
 
 class WindyGridWorld(gym.Env):
     action_space = spaces.Discrete(4) # u, d, r, l
+    reward_range = (-1, -1)
 
     def __init__(self):
         # goal
@@ -102,7 +105,7 @@ class WindyGridWorld(gym.Env):
         # apply wind
         self.y += self.wind[self.x]
         self.y = min(self.y, self.y_u)
-        
+
         # up
         if action == 0:
             self.y += 1
@@ -127,4 +130,5 @@ class WindyGridWorld(gym.Env):
 
         return (self.x, self.y), -1, done, ""
 
-    # No seed func. There is no randomness here!
+    def seed(self, seed=None):
+        return [seed]
