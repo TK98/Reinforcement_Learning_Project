@@ -77,6 +77,41 @@ class ASplit(gym.Env):
         self.np_random, seed = seeding.np_random(seed)
         return [seed]
 
+# TODO implement this, but with actions...?
+class nStateRandomWalk(gym.Env):
+    action_space = spaces.Discrete(1)
+    reward_range = (0, 1)
+
+    def __init__(self):
+        # A,B,C + Terminal
+        self.rightBound, self.leftBound = 3, -3
+        self.seed()
+    
+    def reset(self):
+        self.current = 0
+        return self.current 
+    
+    def step(self, action):
+        # there is only one action
+        direction = self.np_random.choice([-1, 1])
+        self.current += direction
+        if self.current == self.rightBound:
+            done = True
+            r = 1
+        elif self.current == self.leftBound:
+            done = True
+            r = 0
+        else:
+            done = False
+            r = 0
+
+
+        return self.current, r, done, ""
+
+    def seed(self, seed=None):
+        self.np_random, seed = seeding.np_random(seed)
+        return [seed]        
+
 class WindyGridWorld(gym.Env):
     action_space = spaces.Discrete(4) # u, d, r, l
     reward_range = (-1, -1)
