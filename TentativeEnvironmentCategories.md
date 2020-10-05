@@ -29,7 +29,7 @@
 * I would say that anything beyond ATARI is too hard for us... Maybe we can try 1 MuJoCo env.
 
 # Possible enviroments we could use
-I would say all the toy examples (we coded) + 1d gridworld.
+I would say all the toy examples (we coded)
 Then pole-cart, mountain-car (both discrete and continous possibly, to draw a comparison)
 Bipedal walker (maybe with a hard one? if we have time)
 1 Atari game if we can
