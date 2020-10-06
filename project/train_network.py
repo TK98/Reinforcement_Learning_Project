@@ -40,10 +40,13 @@ def train_network(network, memory, optimizer, batch_size, semi_grad=True, use_re
     return loss.item()  # Returns a Python scalar, and releases history (similar to .detach())
 
 
-def run_episodes(env, policy, network, num_episodes, batch_size, learn_rate, semi_grad=True, use_replay=True):
-    memory = ReplayMemory(10000)
+def train_episodes(env, policy, num_episodes, batch_size, learn_rate, semi_grad=True, use_replay=True):
+    policy.train()
+    network = policy.network
+
+    memory = ReplayMemory(1000)
     optimizer = optim.Adam(network.parameters(), learn_rate)
-    policy = policy(network, 0.05)
+    # policy = policy(network, 0.05)
 
     global_steps = 0  # Count the steps (do not reset at episode start, to compute epsilon)
     episode_durations = []
@@ -55,7 +58,7 @@ def run_episodes(env, policy, network, num_episodes, batch_size, learn_rate, sem
         steps = 0
         cum_loss = []
         while True:
-            policy.set_epsilon(get_epsilon(global_steps))
+            policy.update(global_steps)
 
             experience, done = network.step_episode(env, policy)
 
@@ -71,11 +74,11 @@ def run_episodes(env, policy, network, num_episodes, batch_size, learn_rate, sem
                 if i % 10 == 0:
                     print("{2} Episode {0} finished after {1} steps"
                           .format(i, steps, '\033[92m' if steps >= 195 else '\033[99m'))
+
                 episode_durations.append(steps)
-                if cum_loss:
-                    losses.append(np.mean(cum_loss))
-                else:
-                    losses.append(0)
+                mean_loss = np.mean(cum_loss) if cum_loss else 0
+                losses.append(mean_loss)
+
                 break
 
     return episode_durations, losses

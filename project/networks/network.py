@@ -3,8 +3,8 @@ from torch import nn, optim
 import torch.nn.functional as F
 from abc import ABC, abstractmethod
 from typing import Any, List, Tuple, Dict
-
-from .memory import ReplayMemory
+import gym
+from ..policies import Policy
 
 class Network(ABC, nn.Module):
     @abstractmethod
@@ -20,11 +20,11 @@ class Network(ABC, nn.Module):
         pass
 
     @abstractmethod
-    def start_episode(self, env, policy):
+    def start_episode(self, env: gym.Env, policy : Policy) -> None:
         pass
 
     @abstractmethod
-    def step_episode(self, env, policy):
+    def step_episode(self, env: gym.Env, policy : Policy) -> Tuple[Tuple[Any, ...], bool]:
         pass
 
     @staticmethod
