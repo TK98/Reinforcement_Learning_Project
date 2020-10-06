@@ -1,6 +1,7 @@
 import gym
 from gym import spaces
 from gym.utils import seeding
+import numpy as np
 
 # things to do for each env:
 #   - step, reset functions, seed
@@ -134,7 +135,9 @@ class WindyGridWorld(gym.Env):
     
     def reset(self):
         self.x, self.y = 0, 3
-        return (self.x, self.y)
+        return self.get_onehot()
+
+        # return (self.x, self.y)
     
     def step(self, action):
         # apply wind
@@ -163,7 +166,14 @@ class WindyGridWorld(gym.Env):
         # check goal!        
         done = (self.x, self.y) == self.goal
 
-        return (self.x, self.y), -1, done, ""
+        return self.get_onehot(), -1, done, ""
+        # return (self.x, self.y), -1, done, ""
+
+    def get_onehot(self):
+        grid = np.zeros((self.y_u + 1, self.x_u + 1))
+        grid[self.y, self.x] = 1
+
+        return grid.ravel()
 
     def seed(self, seed=None):
         return [seed]

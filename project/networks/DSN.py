@@ -20,7 +20,7 @@ class SARSANetwork(Network):
         self.model = nn.Sequential(nn.Linear(in_features, num_hidden),
                                    nn.ReLU(),
                                    nn.Linear(num_hidden, out_features))
-
+        # self.model = nn.Sequential(nn.Linear(in_features, out_features))  # For the simple environment(s)
         self.discount_factor = discount_factor
 
     def forward(self, x):
