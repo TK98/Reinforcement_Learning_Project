@@ -15,11 +15,22 @@ from .network import Network
 # ========================================================================================= #
 class DeepQNetwork(Network):
 
-    def __init__(self, in_features=4, num_hidden=128, out_features=2, discount_factor=0.8):
+    def __init__(self, in_features=4, out_features=2, architecture=None, discount_factor=0.8):
         nn.Module.__init__(self)
-        self.model = nn.Sequential(nn.Linear(in_features, num_hidden),
-                                   nn.ReLU(),
-                                   nn.Linear(num_hidden, out_features))
+
+        if architecture is None:
+            architecture = []
+
+        nnet = []
+        prev_layer = in_features
+        for layer in architecture:
+            nnet.append(nn.Linear(prev_layer, layer))
+            nnet.append(nn.ReLU())
+            prev_layer = layer
+        nnet.append(nn.Linear(prev_layer, out_features))
+
+        self.model = nn.Sequential(*nnet)
+
         self.discount_factor = discount_factor
 
     def forward(self, x):
