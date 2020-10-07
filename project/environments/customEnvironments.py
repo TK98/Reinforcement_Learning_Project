@@ -11,42 +11,52 @@ import numpy as np
 #   - observation_space attribute
 #   - close function
 
-class BairdsCounterExample(gym.Env):
+class OneHotEnv(gym.Env):
+    def __init__(self, n_states):
+        self.n_states = n_states
+        self.seed()
+
+    def _one_hot(self, state):
+        onehot = np.zeros(self.n_states)
+        onehot[state] = 1
+        return onehot
+
+class BairdsCounterExample(OneHotEnv):
     action_space = spaces.Discrete(2)
     reward_range = (0, 0)
 
     def __init__(self):
-        self.n_states = 7
-        self.seed()
+        super().__init__(7)
     
     def reset(self):
         self.current = self.np_random.choice(range(0, 6))
-        return self.current 
+        return self._one_hot(self.current)
     
     def step(self, action):
         if action == 1:
             self.current = 6
         elif action == 0:
             self.current = self.np_random.choice(range(0, 6))
-        done = False
-        return self.current, 0, done, ""
+
+        done = self.current == 6
+
+        return self._one_hot(self.current), 0, done, ""
 
     def seed(self, seed=None):
         self.np_random, seed = seeding.np_random(seed)
         return [seed]
 
-class ASplit(gym.Env):
+class ASplit(OneHotEnv):
     action_space = spaces.Discrete(1)
     reward_range = (0, 1)
 
     def __init__(self):
         # A,B,C + Terminal
-        self.n_states = 4
-        self.seed()
+        super().__init__(4)
     
     def reset(self):
         self.current = 0
-        return self.current 
+        return self._one_hot(self.current)
     
     def step(self, action):
         # there is only one action
@@ -72,25 +82,26 @@ class ASplit(gym.Env):
         elif self.current == 3:
             raise Exception("You can't be in the terminal state. Perhaps you forgot to .reset()?")
 
-        return self.current, r, done, ""
+        return self._one_hot(self.current), r, done, ""
 
     def seed(self, seed=None):
         self.np_random, seed = seeding.np_random(seed)
         return [seed]
 
 # TODO implement this, but with actions...?
-class nStateRandomWalk(gym.Env):
+class NStateRandomWalk(OneHotEnv):
     action_space = spaces.Discrete(1)
     reward_range = (0, 1)
 
     def __init__(self):
-        # A,B,C + Terminal
-        self.rightBound, self.leftBound = 3, -3
-        self.seed()
+        # 0,1,...,6
+        super().__init__(7)
+        self.leftBound, self.rightBound = 0, 6
     
     def reset(self):
-        self.current = 0
-        return self.current 
+        # central state!
+        self.current = 3
+        return self._one_hot(self.current) 
     
     def step(self, action):
         # there is only one action
@@ -106,8 +117,10 @@ class nStateRandomWalk(gym.Env):
             done = False
             r = 0
 
+        if self.current < self.leftBound or self.current > self.rightBound:
+            raise Exception("You forgot to call reset()!")
 
-        return self.current, r, done, ""
+        return self._one_hot(self.current), r, done, ""
 
     def seed(self, seed=None):
         self.np_random, seed = seeding.np_random(seed)
