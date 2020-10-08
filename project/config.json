@@ -1,0 +1,44 @@
+{
+    "environments": [
+        "BairdsCounterExample", 
+        "ASplit",
+        "NStateRandomWalk",
+        "WindyGridWorld"
+    ],
+    "networks": [
+        "SARSANetwork",
+        "DeepQNetwork"
+    ],
+    "batch-sizes": [
+        32,
+        64,
+        128
+    ],
+    "discount-factors": [
+        0.99,
+        0.95
+    ],
+    "semi-gradient": [
+        true,
+        false
+    ],
+
+
+
+
+    "episodes": [
+        1000,
+        10000,
+        100000
+    ],
+    "lr": [
+        0.1,
+        0.01,
+        0.001
+    ],
+    "rewards": [
+        1,
+        2,
+        3
+    ]
+}
