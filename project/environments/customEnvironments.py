@@ -24,11 +24,11 @@ class OneHotEnv(gym.Env):
         return onehot
 
 class BairdsCounterExample(OneHotEnv):
-    action_space = spaces.Discrete(2)
     reward_range = (0, 0)
 
     def __init__(self):
         self.shape = 7
+        self.action_space = spaces.Discrete(2)
         super().__init__(7)
     
     def reset(self):
@@ -50,12 +50,12 @@ class BairdsCounterExample(OneHotEnv):
         return [seed]
 
 class ASplit(OneHotEnv):
-    action_space = spaces.Discrete(1)
     reward_range = (0, 1)
 
     def __init__(self):
         # A,B,C + Terminal
         self.shape = 4
+        self.action_space = spaces.Discrete(1)
         super().__init__(4)
     
     def reset(self):
@@ -94,12 +94,12 @@ class ASplit(OneHotEnv):
 
 # TODO implement this, but with actions...?
 class NStateRandomWalk(OneHotEnv):
-    action_space = spaces.Discrete(1)
     reward_range = (0, 1)
 
     def __init__(self):
         # 0Terminal,A,B,C,D,E,1Terminal
         self.shape = 7
+        self.action_space = spaces.Discrete(1)
         super().__init__(7)
         self.leftBound, self.rightBound = 1, 5
     
@@ -129,11 +129,11 @@ class NStateRandomWalk(OneHotEnv):
         return [seed]        
 
 class WindyGridWorld(gym.Env):
-    action_space = spaces.Discrete(4) # u, d, r, l
     reward_range = (-1, -1)
 
     def __init__(self):
         self.shape = 2
+        self.action_space = spaces.Discrete(4) # u, d, r, l
         # goal
         self.goal = (7, 3)
         # bounds

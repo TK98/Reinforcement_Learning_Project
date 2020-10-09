@@ -4,7 +4,7 @@ import torch.nn.functional as F
 from abc import ABC, abstractmethod
 from typing import Any, List, Tuple, Dict
 import gym
-from policies import Policy
+from ..policies import Policy
 
 class Network(ABC, nn.Module):
     @abstractmethod
