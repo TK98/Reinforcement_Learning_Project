@@ -3,7 +3,8 @@
         "BairdsCounterExample", 
         "ASplit",
         "NStateRandomWalk",
-        "WindyGridWorld"
+        "WindyGridWorld",
+        "CartPoleEnv"
     ],
     "networks": [
         "SARSANetwork",

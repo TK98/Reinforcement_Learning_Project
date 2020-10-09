@@ -179,11 +179,10 @@ def run(env, net, batch_size, discount_factor, semi_gradient, layer, lr, config)
 
             # Testing
             test_start = time.time()
-            current_config[TEST_EPS_KEY] = n_test_episodes
-            print(f'Start running {n_test_episodes} episodes for test')
+            current_config[TEST_EPS_KEY] = config[TEST_EPS_KEY]
+            print(f'Start running {config[TEST_EPS_KEY]} episodes for test')
 
-            n_test_episodes = config[TEST_EPS_KEY]
-            episode_durations_test, episode_rewards_test = test_episodes(env_ins, policy, n_test_episodes)
+            episode_durations_test, episode_rewards_test = test_episodes(env_ins, policy, config[TEST_EPS_KEY])
             print(f'Training finished in {time.time() - test_start} seconds')
 
             save_plot(episode_durations_test,episode_rewards_test, file_name, mode='test')
