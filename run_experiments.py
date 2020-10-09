@@ -121,7 +121,7 @@ def save_plot(episode_durations, rewards, file_name, mode='train'):
     axes[1].plot(smooth(rewards, 10))
     axes[1].set_title('Reward per episode')
     fig.tight_layout()
-    plt.savefig(f'{save_dir}/{file_name}_{mode}.png')
+    plt.savefig(f'{save_dir}/{file_name}_{mode}.pdf')
 
 
 def run(env, net, batch_size, discount_factor, semi_gradient, layer, lr, config):
