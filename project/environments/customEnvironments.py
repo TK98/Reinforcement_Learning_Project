@@ -30,11 +30,11 @@ class BairdsCounterExample(OneHotEnv):
         self.shape = 7
         self.action_space = spaces.Discrete(2)
         super().__init__(7)
-    
+
     def reset(self):
         self.current = self.np_random.choice(range(0, 6))
         return self._one_hot(self.current)
-    
+
     def step(self, action):
         if action == 1:
             self.current = 6
@@ -57,11 +57,11 @@ class ASplit(OneHotEnv):
         self.shape = 4
         self.action_space = spaces.Discrete(1)
         super().__init__(4)
-    
+
     def reset(self):
         self.current = 0
         return self._one_hot(self.current)
-    
+
     def step(self, action):
         # there is only one action
 
@@ -74,7 +74,7 @@ class ASplit(OneHotEnv):
         # if state is B
         elif self.current == 1:
             # go to terminal and give reward
-            self.current = 3 
+            self.current = 3
             done = True
             r = 1
         # if state is C
@@ -102,12 +102,12 @@ class NStateRandomWalk(OneHotEnv):
         self.action_space = spaces.Discrete(1)
         super().__init__(7)
         self.leftBound, self.rightBound = 1, 5
-    
+
     def reset(self):
         # central state!
         self.current = 3
-        return self._one_hot(self.current) 
-    
+        return self._one_hot(self.current)
+
     def step(self, action):
         # there is only one action
         direction = self.np_random.choice([-1, 1])
@@ -126,7 +126,7 @@ class NStateRandomWalk(OneHotEnv):
 
     def seed(self, seed=None):
         self.np_random, seed = seeding.np_random(seed)
-        return [seed]        
+        return [seed]
 
 class WindyGridWorld(OneHotEnv):
     reward_range = (-1, -1)
@@ -148,13 +148,14 @@ class WindyGridWorld(OneHotEnv):
                 self.wind[x] = 2
             else:
                 self.wind[x] = 0
-    
+
     def reset(self):
         self.x, self.y = 0, 3
+        self.steps = 0
         return self.get_onehot()
 
         # return (self.x, self.y)
-    
+
     def step(self, action):
         # apply wind
         self.y += self.wind[self.x]
@@ -179,8 +180,10 @@ class WindyGridWorld(OneHotEnv):
         else:
             raise Exception("There is no such action!")
 
-        # check goal!        
+        self.steps += 1
+        # check goal!
         done = (self.x, self.y) == self.goal
+        done = done or self.steps > 1000
 
         return self.get_onehot(), -1, done, ""
         # return (self.x, self.y), -1, done, ""
