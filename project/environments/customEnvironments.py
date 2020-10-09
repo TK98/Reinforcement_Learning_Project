@@ -128,11 +128,11 @@ class NStateRandomWalk(OneHotEnv):
         self.np_random, seed = seeding.np_random(seed)
         return [seed]        
 
-class WindyGridWorld(gym.Env):
+class WindyGridWorld(OneHotEnv):
     reward_range = (-1, -1)
 
     def __init__(self):
-        self.shape = 2
+        self.shape = 70
         self.action_space = spaces.Discrete(4) # u, d, r, l
         # goal
         self.goal = (7, 3)

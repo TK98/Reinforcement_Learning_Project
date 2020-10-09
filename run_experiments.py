@@ -60,22 +60,24 @@ def get_file_name_and_config(env,
                              semi_gradient,
                              lr,
                              layer,
+                             num_episodes,
                              seed):
 
     gradient_mode = 'semi' if semi_gradient else 'full'
     env_name = env.__name__
     net_name = net.__name__
-    file_name = f'{gradient_mode}/{env_name}/{net_name}_{batch_size}_{discount_factor}_{semi_gradient}_{lr}_{layer}_{seed}'
+    file_name = f'{gradient_mode}/{env_name}/{net_name}_{batch_size}_{discount_factor}_{semi_gradient}_{lr}_{layer}_{num_episodes}_{seed}'
 
     current_config = {
-        ENV_KEY:    env_name,
-        NET_KEY:    net_name,
-        BAT_KEY:    batch_size,
-        DIS_KEY:    discount_factor,
-        GRA_KEY:    gradient_mode,
-        LR_KEY:     lr,
-        LAYER_KEY:  layer,
-        seed:       seed
+        ENV_KEY:        env_name,
+        NET_KEY:        net_name,
+        BAT_KEY:        batch_size,
+        DIS_KEY:        discount_factor,
+        GRA_KEY:        gradient_mode,
+        LR_KEY:         lr,
+        LAYER_KEY:      layer,
+        "seed":         seed,
+        TRAIN_EPS_KEY:  num_episodes
     }
 
     return file_name, current_config
@@ -126,24 +128,27 @@ def run(env, net, batch_size, discount_factor, semi_gradient, layer, lr, config)
     for seed_iter in range(num_runs):
         seed = seed_base + seed_iter
 
-        file_name, current_config = get_file_name_and_config(env=env,
-                                                             net=net,
-                                                             batch_size=batch_size,
-                                                             discount_factor=discount_factor,
-                                                             semi_gradient=semi_gradient,
-                                                             layer=layer,
-                                                             lr=lr,
-                                                             seed=seed)
+        for num_episodes in config[TRAIN_EPS_KEY]:
+            file_name, current_config = get_file_name_and_config(env=env,
+                                                                net=net,
+                                                                batch_size=batch_size,
+                                                                discount_factor=discount_factor,
+                                                                semi_gradient=semi_gradient,
+                                                                lr=lr,
+                                                                layer=layer,
+                                                                num_episodes=num_episodes,
+                                                                seed=seed)
 
-        if os.path.isfile(f'{save_dir}/{file_name}.pkl'):
-            continue
+            print('Running: ', current_config)
 
-        os.makedirs(f'{save_dir}/{os.path.dirname(file_name)}', exist_ok=True)
+            if os.path.isfile(f'{save_dir}/{file_name}.pkl'):
+                print('Data file for the current run already exists. Skip it.')
+                continue
 
-        env_ins = env()
+            os.makedirs(f'{save_dir}/{os.path.dirname(file_name)}', exist_ok=True)
 
-        print('Running: ', current_config)
-        for epi in config[TRAIN_EPS_KEY]:
+            env_ins = env()
+
             # set the seeds in every iteration
             set_seeds(seed, env=env_ins)
 
@@ -153,10 +158,11 @@ def run(env, net, batch_size, discount_factor, semi_gradient, layer, lr, config)
                           discount_factor=discount_factor)
             policy = EpsilonGreedyPolicy(net_ins)
 
+            # Training
             start = time.time()
             episode_durations_train, losses, episode_rewards_train = train_episodes(env=env_ins,
                                                                                     policy=policy,
-                                                                                    num_episodes=epi,
+                                                                                    num_episodes=num_episodes,
                                                                                     batch_size=batch_size,
                                                                                     learn_rate=lr,
                                                                                     semi_grad=semi_gradient)
@@ -171,14 +177,19 @@ def run(env, net, batch_size, discount_factor, semi_gradient, layer, lr, config)
 
             save_plot(episode_durations_train, losses, file_name)
 
-            n_test_episodes = config[TEST_EPS_KEY]
+            # Testing
+            test_start = time.time()
+            current_config[TEST_EPS_KEY] = n_test_episodes
             print(f'Start running {n_test_episodes} episodes for test')
 
+            n_test_episodes = config[TEST_EPS_KEY]
             episode_durations_test, episode_rewards_test = test_episodes(env_ins, policy, n_test_episodes)
+            print(f'Training finished in {time.time() - test_start} seconds')
+
             save_plot(episode_durations_test,episode_rewards_test, file_name, mode='test')
 
             results = (episode_durations_train, losses, episode_rewards_train,
-                       timespan, episode_durations_test, episode_rewards_test)
+                        timespan, episode_durations_test, episode_rewards_test)
             save_file(results, current_config, file_name)
 
 
@@ -210,6 +221,7 @@ if __name__ == "__main__":
         if answer == 'y':
             try:
                 shutil.rmtree(save_dir)
+                time.sleep(1)
             except:
                 print('Error, perhaps some files are read-only.')
 
