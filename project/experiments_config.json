@@ -16,29 +16,27 @@
     ],
     "discount-factors": [
         0.99,
-        0.95
+        0.95,
+        0.9
     ],
     "semi-gradient": [
         true,
         false
     ],
-
-
-
-
-    "episodes": [
+    "nn_layers": [
+        [128],
+        [128,128]
+    ],
+    "train-episodes": [
         1000,
         10000,
         100000
     ],
-    "lr": [
-        0.1,
-        0.01,
-        0.001
-    ],
-    "rewards": [
+    "test-episodes": [
         1,
         2,
         3
+    ],
+    "lr": [
     ]
 }
