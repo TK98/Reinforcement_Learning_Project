@@ -183,7 +183,7 @@ def run(env, net, batch_size, discount_factor, semi_gradient, layer, lr, config)
             print(f'Start running {config[TEST_EPS_KEY]} episodes for test')
 
             episode_durations_test, episode_rewards_test = test_episodes(env_ins, policy, config[TEST_EPS_KEY])
-            print(f'Training finished in {time.time() - test_start} seconds')
+            print(f'Test finished in {time.time() - test_start} seconds')
 
             save_plot(episode_durations_test,episode_rewards_test, file_name, mode='test')
 
