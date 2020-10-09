@@ -50,12 +50,14 @@ def train_episodes(env, policy, num_episodes, batch_size, learn_rate, semi_grad=
 
     global_steps = 0  # Count the steps (do not reset at episode start, to compute epsilon)
     episode_durations = []
+    episode_rewards = []
     losses = []
     for i in range(num_episodes):
 
         network.start_episode(env, policy)
 
         steps = 0
+        rewards = 0
         cum_loss = []
         while True:
             policy.update(global_steps)
@@ -67,6 +69,7 @@ def train_episodes(env, policy, num_episodes, batch_size, learn_rate, semi_grad=
             if loss:
                 cum_loss.append(loss)
 
+            rewards += experience[2]
             global_steps += 1
             steps += 1
 
@@ -76,9 +79,10 @@ def train_episodes(env, policy, num_episodes, batch_size, learn_rate, semi_grad=
                           .format(i, steps, '\033[92m' if steps >= 195 else '\033[99m'))
 
                 episode_durations.append(steps)
+                episode_rewards.append(rewards)
                 mean_loss = np.mean(cum_loss) if cum_loss else 0
                 losses.append(mean_loss)
 
                 break
 
-    return episode_durations, losses
+    return episode_durations, losses, episode_rewards
