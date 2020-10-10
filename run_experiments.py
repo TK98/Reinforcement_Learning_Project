@@ -196,7 +196,6 @@ def run(env, net, batch_size, discount_factor, semi_gradient, layer, lr, config)
                                                                                     learn_rate=lr,
                                                                                     semi_grad=semi_gradient,
                                                                                     save_q_vals=save_q_vals)
-
             timespan = time.time() - start
             print(f'Training finished in {timespan} seconds')
 
@@ -205,14 +204,18 @@ def run(env, net, batch_size, discount_factor, semi_gradient, layer, lr, config)
             save_train_plot(episode_durations_train, losses, file_name)
 
             # Testing
-            test_start = time.time()
-            current_config[TEST_EPS_KEY] = config[TEST_EPS_KEY]
-            print(f'Start running {config[TEST_EPS_KEY]} episodes for test')
+            episode_durations_test = list()
+            episode_rewards_test = list()
 
-            episode_durations_test, episode_rewards_test = test_episodes(env_ins, policy, config[TEST_EPS_KEY])
-            print(f'Test finished in {time.time() - test_start} seconds')
+            if config[TEST_EPS_KEY] > 0:
+                test_start = time.time()
+                current_config[TEST_EPS_KEY] = config[TEST_EPS_KEY]
+                print(f'Start running {config[TEST_EPS_KEY]} episodes for test')
 
-            save_test_plot(episode_durations_test, episode_rewards_test, file_name)
+                episode_durations_test, episode_rewards_test = test_episodes(env_ins, policy, config[TEST_EPS_KEY])
+                print(f'Test finished in {time.time() - test_start} seconds')
+
+                save_test_plot(episode_durations_test, episode_rewards_test, file_name)
 
             results = (episode_durations_train, losses, episode_rewards_train,
                        timespan, episode_durations_test, episode_rewards_test, q_vals)
