@@ -97,9 +97,7 @@ def save_file(results, current_config, file_name):
     timespan, 
     episode_durations_test, 
     episode_rewards_test,
-    q_vals,
-    targets,
-    squared_error) = results
+    q_vals) = results
 
     data = {
         "config": current_config,
@@ -108,9 +106,7 @@ def save_file(results, current_config, file_name):
             "episode_rewards": episode_rewards_train,
             "losses": losses,
             "duration": timespan,
-            "q_vals": q_vals,
-            "targets": targets,
-            "squared_error": squared_error
+            "q_vals": q_vals
         },
         "test": {
             "episode_durations": episode_durations_test,
@@ -156,6 +152,7 @@ def save_test_plot(episode_durations, episode_rewards, file_name, smoothing=10):
 
 
 def run(env, net, batch_size, discount_factor, semi_gradient, layer, lr, config):
+    save_q_vals = env.__name__ in ['ASplit', 'NStateRandomWalk']
     for seed_iter in range(num_runs):
         seed = seed_base + seed_iter
 
@@ -191,21 +188,19 @@ def run(env, net, batch_size, discount_factor, semi_gradient, layer, lr, config)
 
             # Training
             start = time.time()
-            episode_durations_train, losses, episode_rewards_train, q_vals, targets = train_episodes(env=env_ins,
+            
+            episode_durations_train, losses, episode_rewards_train, q_vals = train_episodes(env=env_ins,
                                                                                     policy=policy,
                                                                                     num_episodes=num_episodes,
                                                                                     batch_size=batch_size,
                                                                                     learn_rate=lr,
-                                                                                    semi_grad=semi_gradient)
+                                                                                    semi_grad=semi_gradient,
+                                                                                    save_q_vals=save_q_vals)
 
-            squared_error = (q_vals - targets) ** 2
             timespan = time.time() - start
             print(f'Training finished in {timespan} seconds')
 
             torch.save(net_ins.state_dict(), f'{save_dir}/{file_name}.pt')
-
-            # TODO: Q values (s,a) where #a=1 (it is V()) ,call compute_q_vals() NStep, Asplit every, in every episode, do not calculate the gradients
-            # see how Q values evolve during training
 
             save_train_plot(episode_durations_train, losses, file_name)
 
@@ -220,8 +215,7 @@ def run(env, net, batch_size, discount_factor, semi_gradient, layer, lr, config)
             save_test_plot(episode_durations_test, episode_rewards_test, file_name)
 
             results = (episode_durations_train, losses, episode_rewards_train,
-                       timespan, episode_durations_test, episode_rewards_test,
-                       q_vals, targets, squared_error)
+                       timespan, episode_durations_test, episode_rewards_test, q_vals)
             save_file(results, current_config, file_name)
 
 

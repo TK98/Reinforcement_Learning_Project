@@ -40,11 +40,11 @@ def train_network(network, memory, optimizer, batch_size, semi_grad=True, use_re
     optimizer.step()
 
     # Returns a Python scalar, and releases history (similar to .detach())
-    return loss.item(), q_val.detach().numpy(), target.detach().numpy()
+    return loss.item()
 
 
 def train_episodes(env, policy, num_episodes, batch_size, learn_rate, semi_grad=True, use_replay=True,
-                   lr_step_size=100, lr_gamma=0.1):
+                   lr_step_size=100, lr_gamma=0.1, save_q_vals=False):
     policy.train()
     network = policy.network
 
@@ -58,7 +58,6 @@ def train_episodes(env, policy, num_episodes, batch_size, learn_rate, semi_grad=
     episode_rewards = []
     losses = []
     q_vals = []
-    targets = []
     for i in range(num_episodes):
 
         network.start_episode(env, policy)
@@ -72,12 +71,9 @@ def train_episodes(env, policy, num_episodes, batch_size, learn_rate, semi_grad=
             experience, done = network.step_episode(env, policy)
 
             memory.push(experience)
-            result = train_network(network, memory, optimizer, batch_size, semi_grad)
-            if result:
-                loss, q_val, target = result
+            loss = train_network(network, memory, optimizer, batch_size, semi_grad)
+            if loss:
                 cum_loss.append(loss)
-                q_vals.append(q_val.squeeze())
-                targets.append(target.squeeze())
 
             rewards += experience[2]
             global_steps += 1
@@ -94,9 +90,13 @@ def train_episodes(env, policy, num_episodes, batch_size, learn_rate, semi_grad=
                 mean_loss = np.mean(cum_loss) if cum_loss else 0
                 losses.append(mean_loss)
 
+                if save_q_vals:
+                    with torch.no_grad():
+                        all_states = torch.eye(env.shape, dtype=torch.float)
+                        q_val = network(all_states)
+                        q_vals.append(q_val)
+
                 break
     
-    q_vals = np.array(q_vals)
-    targets = np.array(targets)
-
-    return episode_durations, losses, episode_rewards, q_vals, targets
+    q_vals = torch.cat(q_vals, dim=1).T if save_q_vals else None
+    return episode_durations, losses, episode_rewards, q_vals
