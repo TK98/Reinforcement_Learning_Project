@@ -133,3 +133,6 @@ dmypy.json
 *.pkl
 *.pt
 *.png
+
+# Mac
+.DS_Store

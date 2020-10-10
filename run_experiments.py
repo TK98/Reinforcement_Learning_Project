@@ -91,7 +91,15 @@ def set_seeds(seed, env):
 
 
 def save_file(results, current_config, file_name):
-    episode_durations_train, losses, episode_rewards_train, timespan, episode_durations_test, episode_rewards_test = results
+    (episode_durations_train, 
+    losses,
+    episode_rewards_train, 
+    timespan, 
+    episode_durations_test, 
+    episode_rewards_test,
+    q_vals,
+    targets,
+    squared_error) = results
 
     data = {
         "config": current_config,
@@ -100,6 +108,9 @@ def save_file(results, current_config, file_name):
             "episode_rewards": episode_rewards_train,
             "losses": losses,
             "duration": timespan,
+            "q_vals": q_vals,
+            "targets": targets,
+            "squared_error": squared_error
         },
         "test": {
             "episode_durations": episode_durations_test,
@@ -209,7 +220,8 @@ def run(env, net, batch_size, discount_factor, semi_gradient, layer, lr, config)
             save_test_plot(episode_durations_test, episode_rewards_test, file_name)
 
             results = (episode_durations_train, losses, episode_rewards_train,
-                       timespan, episode_durations_test, episode_rewards_test)
+                       timespan, episode_durations_test, episode_rewards_test,
+                       q_vals, targets, squared_error)
             save_file(results, current_config, file_name)
 
 

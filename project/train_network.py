@@ -66,8 +66,6 @@ def train_episodes(env, policy, num_episodes, batch_size, learn_rate, semi_grad=
         steps = 0
         rewards = 0
         cum_loss = []
-        cum_q_val = []
-        cum_targets = []
         while True:
             policy.update(global_steps)
 
@@ -78,8 +76,8 @@ def train_episodes(env, policy, num_episodes, batch_size, learn_rate, semi_grad=
             if result:
                 loss, q_val, target = result
                 cum_loss.append(loss)
-                cum_q_val.append(q_val.squeeze())
-                cum_targets.append(target.squeeze())
+                q_vals.append(q_val.squeeze())
+                targets.append(target.squeeze())
 
             rewards += experience[2]
             global_steps += 1
@@ -94,15 +92,11 @@ def train_episodes(env, policy, num_episodes, batch_size, learn_rate, semi_grad=
                 episode_durations.append(steps)
                 episode_rewards.append(rewards)
                 mean_loss = np.mean(cum_loss) if cum_loss else 0
-                mean_q_val = np.array(cum_q_val).mean(axis=0) if cum_q_val else np.zeros((num_episodes, batch_size))
-                mean_targets = np.array(cum_targets).mean(axis=0) if cum_targets else np.zeros((num_episodes, batch_size))
                 losses.append(mean_loss)
-                q_vals.append(mean_q_val)
-                targets.append(mean_targets)
 
                 break
     
-    q_vals = np.array(q_vals).reshape(-1, batch_size)
-    targets = np.array(targets).reshape(-1, batch_size)
+    q_vals = np.array(q_vals)
+    targets = np.array(targets)
 
     return episode_durations, losses, episode_rewards, q_vals, targets
