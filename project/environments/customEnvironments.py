@@ -3,6 +3,7 @@ from gym import spaces
 from gym.utils import seeding
 import numpy as np
 from gym import spaces, logger
+import math
 
 
 # things to do for each env:
@@ -258,6 +259,9 @@ class CartPoleEnv(gym.Env):
         self.theta_threshold_radians = 12 * 2 * math.pi / 360
         self.x_threshold = 2.4
 
+        # Max steps threshold
+        self.steps_threshold = 200
+
         # Angle limit set to 2 * theta_threshold_radians so failing observation
         # is still within bounds.
         high = np.array([self.x_threshold * 2,
@@ -282,6 +286,8 @@ class CartPoleEnv(gym.Env):
     def step(self, action):
         err_msg = "%r (%s) invalid" % (action, type(action))
         assert self.action_space.contains(action), err_msg
+
+        self.steps += 1
 
         x, x_dot, theta, theta_dot = self.state
         force = self.force_mag if action == 1 else -self.force_mag
@@ -312,6 +318,7 @@ class CartPoleEnv(gym.Env):
             or x > self.x_threshold
             or theta < -self.theta_threshold_radians
             or theta > self.theta_threshold_radians
+            or self.steps >= self.steps_threshold
         )
 
         if not done:
@@ -336,6 +343,7 @@ class CartPoleEnv(gym.Env):
     def reset(self):
         self.state = self.np_random.uniform(low=-0.05, high=0.05, size=(4,))
         self.steps_beyond_done = None
+        self.steps = 0
         return np.array(self.state)
 
     def render(self, mode='human'):
