@@ -1,6 +1,6 @@
 {
     "environments": [
-        "BairdsCounterExample", 
+        "BairdsCounterExample",
         "ASplit",
         "NStateRandomWalk",
         "WindyGridWorld",
@@ -37,5 +37,5 @@
         200,
         1000
     ],
-    "test-episodes": 30
+    "test-episodes": 100
 }
