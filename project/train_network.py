@@ -38,11 +38,13 @@ def train_network(network, memory, optimizer, batch_size, semi_grad=True, use_re
     optimizer.zero_grad()
     loss.backward()
     optimizer.step()
-    return loss.item()  # Returns a Python scalar, and releases history (similar to .detach())
+
+    # Returns a Python scalar, and releases history (similar to .detach())
+    return loss.item()
 
 
 def train_episodes(env, policy, num_episodes, batch_size, learn_rate, semi_grad=True, use_replay=True,
-                   lr_step_size=100, lr_gamma=0.1):
+                   lr_step_size=100, lr_gamma=0.1, save_q_vals=False):
     policy.train()
     network = policy.network
 
@@ -55,6 +57,7 @@ def train_episodes(env, policy, num_episodes, batch_size, learn_rate, semi_grad=
     episode_durations = []
     episode_rewards = []
     losses = []
+    q_vals = []
     for i in range(num_episodes):
 
         network.start_episode(env, policy)
@@ -88,6 +91,13 @@ def train_episodes(env, policy, num_episodes, batch_size, learn_rate, semi_grad=
                 mean_loss = np.mean(cum_loss) if cum_loss else 0
                 losses.append(mean_loss)
 
-                break
+                if save_q_vals:
+                    with torch.no_grad():
+                        all_states = torch.eye(env.shape, dtype=torch.float)
+                        q_val = network(all_states)
+                        q_vals.append(q_val)
 
-    return episode_durations, losses, episode_rewards
+                break
+    
+    q_vals = torch.cat(q_vals, dim=1).T if save_q_vals else None
+    return episode_durations, losses, episode_rewards, q_vals
