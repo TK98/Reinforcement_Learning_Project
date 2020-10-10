@@ -27,6 +27,8 @@ LAYER_KEY       = 'nn_layers'
 TRAIN_EPS_KEY   = 'train-episodes'
 TEST_EPS_KEY    = 'test-episodes'
 LR_KEY          = 'lr'
+LR_SS_KEY       = 'lr_step_size'
+LR_GAMMA_KEY    = 'lr_gamma'
 
 # settings
 seed_base = 42
@@ -59,6 +61,8 @@ def get_file_name_and_config(env,
                              discount_factor,
                              semi_gradient,
                              lr,
+                             lr_step_size,
+                             lr_gamma,
                              layer,
                              num_episodes,
                              seed):
@@ -66,7 +70,7 @@ def get_file_name_and_config(env,
     gradient_mode = 'semi' if semi_gradient else 'full'
     env_name = env.__name__
     net_name = net.__name__
-    file_name = f'{gradient_mode}/{env_name}/{net_name}_{batch_size}_{discount_factor}_{semi_gradient}_{lr}_{layer}_{num_episodes}_{seed}'
+    file_name = f'{gradient_mode}/{env_name}/{net_name}_{batch_size}_{discount_factor}_{semi_gradient}_{lr}_{lr_step_size}_{lr_gamma}_{layer}_{num_episodes}_{seed}'
 
     current_config = {
         ENV_KEY:        env_name,
@@ -75,6 +79,8 @@ def get_file_name_and_config(env,
         DIS_KEY:        discount_factor,
         GRA_KEY:        gradient_mode,
         LR_KEY:         lr,
+        LR_SS_KEY:      lr_step_size,
+        LR_GAMMA_KEY:   lr_gamma,
         LAYER_KEY:      layer,
         "seed":         seed,
         TRAIN_EPS_KEY:  num_episodes
@@ -151,7 +157,7 @@ def save_test_plot(episode_durations, episode_rewards, file_name, smoothing=10):
                    file_name + '_test')
 
 
-def run(env, net, batch_size, discount_factor, semi_gradient, layer, lr, config):
+def run(env, net, batch_size, discount_factor, semi_gradient, layer, lr, lr_step_size, lr_gamma, config):
     save_q_vals = env.__name__ in ['ASplit', 'NStateRandomWalk']
     for seed_iter in range(num_runs):
         seed = seed_base + seed_iter
@@ -163,6 +169,8 @@ def run(env, net, batch_size, discount_factor, semi_gradient, layer, lr, config)
                                                                 discount_factor=discount_factor,
                                                                 semi_gradient=semi_gradient,
                                                                 lr=lr,
+                                                                lr_step_size=lr_step_size,
+                                                                lr_gamma=lr_gamma,
                                                                 layer=layer,
                                                                 num_episodes=num_episodes,
                                                                 seed=seed)
@@ -195,7 +203,10 @@ def run(env, net, batch_size, discount_factor, semi_gradient, layer, lr, config)
                                                                                     batch_size=batch_size,
                                                                                     learn_rate=lr,
                                                                                     semi_grad=semi_gradient,
-                                                                                    save_q_vals=save_q_vals)
+                                                                                    save_q_vals=save_q_vals,
+                                                                                    lr_step_size=lr_step_size,
+                                                                                    lr_gamma=lr_gamma,
+                                                                                    semi_grad=semi_gradient)
             timespan = time.time() - start
             print(f'Training finished in {timespan} seconds')
 
@@ -230,14 +241,18 @@ def main(config):
                     for semi_gradient in config[GRA_KEY]:
                         for layer in config[LAYER_KEY]:
                             for lr in config[LR_KEY]:
-                                run(env=env,
-                                    net=net,
-                                    batch_size=batch_size,
-                                    discount_factor=discount_factor,
-                                    semi_gradient=semi_gradient,
-                                    layer=layer,
-                                    lr=lr,
-                                    config=config)
+                                for lrss in config[LR_SS_KEY]:
+                                    for lr_gamma in config[LR_GAMMA_KEY]:
+                                        run(env=env,
+                                            net=net,
+                                            batch_size=batch_size,
+                                            discount_factor=discount_factor,
+                                            semi_gradient=semi_gradient,
+                                            layer=layer,
+                                            lr=lr,
+                                            lr_step_size=lrss,
+                                            lr_gamma=lr_gamma,
+                                            config=config)
 
 
 if __name__ == "__main__":

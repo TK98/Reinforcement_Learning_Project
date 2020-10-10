@@ -80,7 +80,8 @@ def train_episodes(env, policy, num_episodes, batch_size, learn_rate, semi_grad=
             steps += 1
 
             if done:
-                scheduler.step()
+                if len(memory) > batch_size and use_replay is True:
+                    scheduler.step()
                 if i % 10 == 0:
                     print("{2} Episode {0} finished after {1} steps"
                           .format(i, steps, '\033[92m' if steps >= 195 else '\033[99m'))
