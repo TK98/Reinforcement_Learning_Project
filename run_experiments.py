@@ -180,13 +180,14 @@ def run(env, net, batch_size, discount_factor, semi_gradient, layer, lr, config)
 
             # Training
             start = time.time()
-            episode_durations_train, losses, episode_rewards_train = train_episodes(env=env_ins,
+            episode_durations_train, losses, episode_rewards_train, q_vals, targets = train_episodes(env=env_ins,
                                                                                     policy=policy,
                                                                                     num_episodes=num_episodes,
                                                                                     batch_size=batch_size,
                                                                                     learn_rate=lr,
                                                                                     semi_grad=semi_gradient)
 
+            squared_error = (q_vals - targets) ** 2
             timespan = time.time() - start
             print(f'Training finished in {timespan} seconds')
 

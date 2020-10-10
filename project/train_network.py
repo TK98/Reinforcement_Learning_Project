@@ -37,7 +37,9 @@ def train_network(network, memory, optimizer, batch_size, semi_grad=True, use_re
     optimizer.zero_grad()
     loss.backward()
     optimizer.step()
-    return loss.item()  # Returns a Python scalar, and releases history (similar to .detach())
+
+    # Returns a Python scalar, and releases history (similar to .detach())
+    return loss.item(), q_val.detach().numpy(), target.detach().numpy()
 
 
 def train_episodes(env, policy, num_episodes, batch_size, learn_rate, semi_grad=True, use_replay=True):
@@ -52,6 +54,8 @@ def train_episodes(env, policy, num_episodes, batch_size, learn_rate, semi_grad=
     episode_durations = []
     episode_rewards = []
     losses = []
+    q_vals = []
+    targets = []
     for i in range(num_episodes):
 
         network.start_episode(env, policy)
@@ -59,15 +63,20 @@ def train_episodes(env, policy, num_episodes, batch_size, learn_rate, semi_grad=
         steps = 0
         rewards = 0
         cum_loss = []
+        cum_q_val = []
+        cum_targets = []
         while True:
             policy.update(global_steps)
 
             experience, done = network.step_episode(env, policy)
 
             memory.push(experience)
-            loss = train_network(network, memory, optimizer, batch_size, semi_grad)
-            if loss:
+            result = train_network(network, memory, optimizer, batch_size, semi_grad)
+            if result:
+                loss, q_val, target = result
                 cum_loss.append(loss)
+                cum_q_val.append(q_val.squeeze())
+                cum_targets.append(target.squeeze())
 
             rewards += experience[2]
             global_steps += 1
@@ -81,8 +90,15 @@ def train_episodes(env, policy, num_episodes, batch_size, learn_rate, semi_grad=
                 episode_durations.append(steps)
                 episode_rewards.append(rewards)
                 mean_loss = np.mean(cum_loss) if cum_loss else 0
+                mean_q_val = np.array(cum_q_val).mean(axis=0) if cum_q_val else np.zeros((num_episodes, batch_size))
+                mean_targets = np.array(cum_targets).mean(axis=0) if cum_targets else np.zeros((num_episodes, batch_size))
                 losses.append(mean_loss)
+                q_vals.append(mean_q_val)
+                targets.append(mean_targets)
 
                 break
+    
+    q_vals = np.array(q_vals).reshape(-1, batch_size)
+    targets = np.array(targets).reshape(-1, batch_size)
 
-    return episode_durations, losses, episode_rewards
+    return episode_durations, losses, episode_rewards, q_vals, targets
