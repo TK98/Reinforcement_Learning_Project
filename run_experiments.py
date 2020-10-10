@@ -33,7 +33,7 @@ LR_GAMMA_KEY    = 'lr_gamma'
 # settings
 seed_base = 42
 num_runs = 10
-overwrite_existing_files = 1
+overwrite_existing_files = False
 config_file = "experiments_config.json"
 save_dir = "saved_experiments"
 
