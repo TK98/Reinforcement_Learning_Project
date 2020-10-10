@@ -33,7 +33,7 @@ LR_GAMMA_KEY    = 'lr_gamma'
 # settings
 seed_base = 42
 num_runs = 10
-overwrite_existing_files = False
+overwrite_existing_files = 1
 config_file = "experiments_config.json"
 save_dir = "saved_experiments"
 
@@ -205,8 +205,7 @@ def run(env, net, batch_size, discount_factor, semi_gradient, layer, lr, lr_step
                                                                                     semi_grad=semi_gradient,
                                                                                     save_q_vals=save_q_vals,
                                                                                     lr_step_size=lr_step_size,
-                                                                                    lr_gamma=lr_gamma,
-                                                                                    semi_grad=semi_gradient)
+                                                                                    lr_gamma=lr_gamma)
             timespan = time.time() - start
             print(f'Training finished in {timespan} seconds')
 
