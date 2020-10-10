@@ -2,6 +2,7 @@ import torch
 from torch import optim
 import torch.nn.functional as F
 import numpy as np
+from torch.optim import lr_scheduler
 
 from .networks import Network, ReplayMemory
 
@@ -40,12 +41,14 @@ def train_network(network, memory, optimizer, batch_size, semi_grad=True, use_re
     return loss.item()  # Returns a Python scalar, and releases history (similar to .detach())
 
 
-def train_episodes(env, policy, num_episodes, batch_size, learn_rate, semi_grad=True, use_replay=True):
+def train_episodes(env, policy, num_episodes, batch_size, learn_rate, semi_grad=True, use_replay=True,
+                   lr_step_size=100, lr_gamma=0.1):
     policy.train()
     network = policy.network
 
     memory = ReplayMemory(1000)
     optimizer = optim.Adam(network.parameters(), learn_rate)
+    scheduler = lr_scheduler.StepLR(optimizer, lr_step_size, lr_gamma)
     # policy = policy(network, 0.05)
 
     global_steps = 0  # Count the steps (do not reset at episode start, to compute epsilon)
@@ -74,6 +77,7 @@ def train_episodes(env, policy, num_episodes, batch_size, learn_rate, semi_grad=
             steps += 1
 
             if done:
+                scheduler.step()
                 if i % 10 == 0:
                     print("{2} Episode {0} finished after {1} steps"
                           .format(i, steps, '\033[92m' if steps >= 195 else '\033[99m'))
