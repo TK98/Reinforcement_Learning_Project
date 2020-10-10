@@ -114,14 +114,34 @@ def smooth(x, N):
     return (cumsum[N:] - cumsum[:-N]) / float(N)
 
 
-def save_plot(episode_durations, rewards, file_name, mode='train'):
+# def save_plot(episode_durations, rewards, file_name, mode='train'):
+#     fig, axes = plt.subplots(nrows=1, ncols=2)
+#     axes[0].plot(smooth(episode_durations, 10))
+#     axes[0].set_title('Episode durations per episode')
+#     axes[1].plot(smooth(rewards, 10))
+#     axes[1].set_title('Reward per episode')
+#     fig.tight_layout()
+#     plt.savefig(f'{save_dir}/{file_name}_{mode}.pdf')
+
+def save_side_plot(plot_1, plot_1_name, plot_2, plot_2_name, file_name, extension='pdf'):
     fig, axes = plt.subplots(nrows=1, ncols=2)
-    axes[0].plot(smooth(episode_durations, 10))
-    axes[0].set_title('Episode durations per episode')
-    axes[1].plot(smooth(rewards, 10))
-    axes[1].set_title('Reward per episode')
+    axes[0].plot(plot_1)
+    axes[0].set_title(plot_1_name)
+    axes[1].plot(plot_2)
+    axes[1].set_title(plot_2_name)
     fig.tight_layout()
-    plt.savefig(f'{save_dir}/{file_name}_{mode}.pdf')
+    plt.savefig(f'{save_dir}/{file_name}.{extension}')
+    plt.close(fig)
+
+def save_train_plot(episode_durations, episode_losses, file_name, smoothing=10):
+    save_side_plot(smooth(episode_durations, smoothing), 'Episode durations per episode',
+                   smooth(episode_losses, smoothing), 'Average loss per episode',
+                   file_name + '_train')
+
+def save_test_plot(episode_durations, episode_rewards, file_name, smoothing=10):
+    save_side_plot(smooth(episode_durations, smoothing), 'Episode durations per episode',
+                   smooth(episode_rewards, smoothing), 'Rewards per episode',
+                   file_name + '_test')
 
 
 def run(env, net, batch_size, discount_factor, semi_gradient, layer, lr, config):
@@ -175,7 +195,7 @@ def run(env, net, batch_size, discount_factor, semi_gradient, layer, lr, config)
             # TODO: Q values (s,a) where #a=1 (it is V()) ,call compute_q_vals() NStep, Asplit every, in every episode, do not calculate the gradients
             # see how Q values evolve during training
 
-            save_plot(episode_durations_train, losses, file_name)
+            save_train_plot(episode_durations_train, losses, file_name)
 
             # Testing
             test_start = time.time()
@@ -185,10 +205,10 @@ def run(env, net, batch_size, discount_factor, semi_gradient, layer, lr, config)
             episode_durations_test, episode_rewards_test = test_episodes(env_ins, policy, config[TEST_EPS_KEY])
             print(f'Test finished in {time.time() - test_start} seconds')
 
-            save_plot(episode_durations_test,episode_rewards_test, file_name, mode='test')
+            save_test_plot(episode_durations_test, episode_rewards_test, file_name)
 
             results = (episode_durations_train, losses, episode_rewards_train,
-                        timespan, episode_durations_test, episode_rewards_test)
+                       timespan, episode_durations_test, episode_rewards_test)
             save_file(results, current_config, file_name)
 
 

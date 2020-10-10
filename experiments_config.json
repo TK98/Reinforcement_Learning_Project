@@ -1,6 +1,6 @@
 {
     "environments": [
-        "WindyGridWorld"
+        "CartPoleEnv"
     ],
     "networks": [
         "SARSANetwork",
@@ -25,5 +25,5 @@
     "train-episodes": [
         200
     ],
-    "test-episodes": 10
+    "test-episodes": 100
 }
