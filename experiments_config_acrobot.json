@@ -1,0 +1,35 @@
+{
+    "environments": [
+        "AcrobotEnv"
+    ],
+    "networks": [
+        "DeepQNetwork",
+        "SARSANetwork"
+    ],
+    "batch-sizes": [
+        32
+    ],
+    "discount-factors": [
+        0.99
+    ],
+    "semi-gradient": [
+        true,
+        false
+    ],
+    "lr": [
+        0.001
+    ],
+    "lr_step_size": [
+        250
+    ],
+    "lr_gamma": [
+        0.1
+    ],
+    "nn_layers": [
+        [128]
+    ],
+    "train-episodes": [
+        500
+    ],
+    "test-episodes": 100
+}
