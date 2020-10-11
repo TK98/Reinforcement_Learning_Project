@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 from aggregate_plots import get_files
 import run_experiments as ex
 
-config_filename = 'experiments_config_random.json'
+config_filenames = ['experiments_config_random.json', 'experiments_config_asplit.json']
 folder = 'saved_experiments'
 
 nonterminal_states = {
@@ -33,6 +33,10 @@ def get_qMSE(data, env_name):
 
 def aggregate(files, env, net, batch_size, discount_factor, semi_gradient, layer, lr, lr_step_size, lr_gamma):
 
+    # we only plot DQN
+    if net.__name__ == 'SARSANetwork':
+        return
+
     env_name = env.__name__
     file_name = f"{folder}/{'semi' if semi_gradient else 'full'}/{env_name}/qMSE_{net.__name__}_{batch_size}_{discount_factor}_{semi_gradient}_{lr}_{lr_step_size}_{lr_gamma}_{layer}_NUMEPISODES_*"
     
@@ -49,9 +53,8 @@ def aggregate(files, env, net, batch_size, discount_factor, semi_gradient, layer
             q_vals_per_seed.append(non_terminal_last_q_vals.numpy())
     
     mean_qMSE = np.mean(qMSE_per_seed, axis=0)
-    plt.plot(mean_qMSE)
-    plt.savefig(f'{file_name}.pdf')
-    plt.close()
+    print(np.std(qMSE_per_seed, axis=0))
+    plt.plot(mean_qMSE, alpha=0.7, label=f"{'semi gradient' if semi_gradient else 'full gradient'}")
 
     # format error
     print(f'\n\nfor {file_name}:')
@@ -64,5 +67,16 @@ def aggregate(files, env, net, batch_size, discount_factor, semi_gradient, layer
 def do_stuff(env, net, batch_size, discount_factor, semi_gradient, layer, lr, lr_step_size, lr_gamma, config):
     file_name, files = get_files(env, net, batch_size, discount_factor, semi_gradient, layer, lr, lr_step_size, lr_gamma, config)
     aggregate(files, env, net, batch_size, discount_factor, semi_gradient, layer, lr, lr_step_size, lr_gamma)
+    
 
-ex.do_loop(ex.load_config(config_filename), do_stuff)
+
+for config_filename in config_filenames:
+    config = ex.load_config(config_filename)
+    ex.do_loop(config, do_stuff)
+    env_name = 'ASplit' if 'A'==config['environments'][0].__name__[0] else 'N-step random walk'
+    plt.title(f"{env_name} Q-MSE over training")
+    plt.legend()
+    plt.xlabel('Training steps')
+    plt.ylabel('Q-MSE')
+    plt.savefig(f"qvals_{config['environments'][0].__name__}.pdf")
+    plt.close()
