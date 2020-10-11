@@ -26,15 +26,17 @@ def plot(data_list):
     envs = set([env for (env, _) in data_tuples]) # unique envs
 
     for env in envs:
-        data = pd.concat([data for (_, data) in data_tuples], axis=1)
+        data = pd.concat([data for (data_env, data) in data_tuples if data_env == env],
+                         axis=1)
 
         sns_plot = sns.lineplot(data=data, color=sns.color_palette())
 
         sns_plot.set_title(f'{env}')
         sns_plot.set_xlabel("Episodes")
         sns_plot.set_ylabel("Episode duration per episode")
-        # plt.savefig(f"{RESULTS_DIR}/lineplot_{group}.pdf", bbox_inches = 'tight', pad_inches = 0)
+
         plt.show()
+        plt.clf()
 
         print('Plot created.')
 
