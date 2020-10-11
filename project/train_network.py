@@ -48,7 +48,7 @@ def train_episodes(env, policy, num_episodes, batch_size, learn_rate, semi_grad=
     policy.train()
     network = policy.network
 
-    memory = ReplayMemory(100000)
+    memory = ReplayMemory(1e5)
     optimizer = optim.Adam(network.parameters(), learn_rate)
     scheduler = lr_scheduler.StepLR(optimizer, lr_step_size, lr_gamma)
     # policy = policy(network, 0.05)
