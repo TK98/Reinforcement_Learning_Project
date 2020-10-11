@@ -56,6 +56,7 @@ def do_stuff(env, net, batch_size, discount_factor, semi_gradient, layer, lr, lr
 def main(config):
     global test_vals
     global time_vals
+
     test_vals = {'SARSANetwork':
                      {'semi': [],
                       'full': []},
@@ -110,9 +111,8 @@ def main(config):
     print(f"full DQN took {np.mean(full_dq_time):.3f} seconds to train")
 
 
-
 if __name__ == "__main__":
-    config_filename = 'experiments_config.json'
+    config_filename = 'experiments_config_windy.json'
     config = ex.load_config(config_filename)
 
     main(config)
