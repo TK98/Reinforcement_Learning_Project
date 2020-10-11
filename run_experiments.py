@@ -167,8 +167,8 @@ def do_loop(config, func):
                             for lr in config[LR_KEY]:
                                 for lrss in config[LR_SS_KEY]:
                                     for lr_gamma in config[LR_GAMMA_KEY]:
-                                        func(env, net, batch_size, discount_factor, semi_gradient,
-                                            layer, lr, lrss, lr_gamma, config)
+                                        yield func(env, net, batch_size, discount_factor, semi_gradient,
+                                                   layer, lr, lrss, lr_gamma, config)
 
 
 def run(env, net, batch_size, discount_factor, semi_gradient, layer, lr, lr_step_size, lr_gamma, config):
