@@ -32,13 +32,13 @@ LR_GAMMA_KEY    = 'lr_gamma'
 
 # settings
 seed_base = 42
-num_runs = 10
+num_runs = 30
 overwrite_existing_files = False
 config_file = "experiments_config.json"
 save_dir = "saved_experiments"
 
 
-def load_config():
+def load_config(config_file=config_file):
     def init_classes(config, module_name):
         # Convert class name strings to class instances
         for i in range(len(config[module_name])):
@@ -157,6 +157,20 @@ def save_test_plot(episode_durations, episode_rewards, file_name, smoothing=10):
                    file_name + '_test')
 
 
+def do_loop(config, func):
+    for env in config[ENV_KEY]:
+        for net in config[NET_KEY]:
+            for batch_size in config[BAT_KEY]:
+                for discount_factor in config[DIS_KEY]:
+                    for semi_gradient in config[GRA_KEY]:
+                        for layer in config[LAYER_KEY]:
+                            for lr in config[LR_KEY]:
+                                for lrss in config[LR_SS_KEY]:
+                                    for lr_gamma in config[LR_GAMMA_KEY]:
+                                        func(env, net, batch_size, discount_factor, semi_gradient,
+                                            layer, lr, lrss, lr_gamma, config)
+
+
 def run(env, net, batch_size, discount_factor, semi_gradient, layer, lr, lr_step_size, lr_gamma, config):
     save_q_vals = env.__name__ in ['ASplit', 'NStateRandomWalk']
     for seed_iter in range(num_runs):
@@ -233,26 +247,7 @@ def run(env, net, batch_size, discount_factor, semi_gradient, layer, lr, lr_step
 
 
 def main(config):
-    for env in config[ENV_KEY]:
-        for net in config[NET_KEY]:
-            for batch_size in config[BAT_KEY]:
-                for discount_factor in config[DIS_KEY]:
-                    for semi_gradient in config[GRA_KEY]:
-                        for layer in config[LAYER_KEY]:
-                            for lr in config[LR_KEY]:
-                                for lrss in config[LR_SS_KEY]:
-                                    for lr_gamma in config[LR_GAMMA_KEY]:
-                                        run(env=env,
-                                            net=net,
-                                            batch_size=batch_size,
-                                            discount_factor=discount_factor,
-                                            semi_gradient=semi_gradient,
-                                            layer=layer,
-                                            lr=lr,
-                                            lr_step_size=lrss,
-                                            lr_gamma=lr_gamma,
-                                            config=config)
-
+    do_loop(config, run)
 
 if __name__ == "__main__":
     if overwrite_existing_files:
