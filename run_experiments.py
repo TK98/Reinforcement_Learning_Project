@@ -12,9 +12,6 @@ import numpy as np
 import importlib
 import matplotlib.pyplot as plt
 
-import project
-from project.environments import *
-from project.networks import DeepQNetwork, DeepSARSA
 from project.policies import EpsilonGreedyPolicy
 from project.test_network import test_episodes
 from project.train_network import train_episodes
@@ -32,6 +29,7 @@ LR_KEY = 'lr'
 LR_SS_KEY = 'lr_step_size'
 LR_GAMMA_KEY = 'lr_gamma'
 REP_MEM_KEY = 'replay_memory'
+SEED_KEY = 'seed'
 
 # settings
 seed_base = 42
@@ -70,6 +68,7 @@ def get_file_name_and_config(env,
                              num_episodes,
                              replay_memory,
                              seed):
+
     gradient_mode = 'semi' if semi_gradient else 'full'
     env_name = env.__name__
     net_name = net.__name__
@@ -86,7 +85,7 @@ def get_file_name_and_config(env,
         LR_SS_KEY: lr_step_size,
         LR_GAMMA_KEY: lr_gamma,
         LAYER_KEY: layer,
-        "seed": seed,
+        SEED_KEY: seed,
         TRAIN_EPS_KEY: num_episodes,
         REP_MEM_KEY: replay_memory
     }
@@ -165,6 +164,9 @@ def save_test_plot(episode_durations, episode_rewards, file_name, smoothing=10):
 
 
 def do_loop(config, func):
+    """ Creates the cartesian product from all lists in config.
+    Each iteration from do_loop runs 'func' once with the next element in this cartesian product."""
+
     runs_settings = itertools.product(config[ENV_KEY],
                                       config[NET_KEY],
                                       config[BAT_KEY],
@@ -227,9 +229,10 @@ def run(env, net, batch_size, discount_factor, semi_gradient, layer, lr, lr_step
                                                                                             batch_size=batch_size,
                                                                                             learn_rate=lr,
                                                                                             semi_grad=semi_gradient,
-                                                                                            save_q_vals=save_q_vals,
+                                                                                            use_replay=True,
                                                                                             lr_step_size=lr_step_size,
                                                                                             lr_gamma=lr_gamma,
+                                                                                            save_q_vals=save_q_vals,
                                                                                             replay_mem_size=replay_mem)
             timespan = time.time() - start
             print(f'Training finished in {timespan} seconds')

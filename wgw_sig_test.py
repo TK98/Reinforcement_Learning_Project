@@ -1,15 +1,12 @@
 from glob import glob
 
 import pickle
-import matplotlib.pyplot as plt
-import seaborn as sns
 import numpy as np
 import scipy.stats as stats
-import pandas as pd
 import run_experiments as ex
 
 
-def obtain_data(files, file_name, semi_gradient, env_name, net_name, smoothing=10):
+def obtain_data(files):
 
     for file in files:
         with open(file, 'rb') as f:
@@ -23,8 +20,7 @@ def obtain_data(files, file_name, semi_gradient, env_name, net_name, smoothing=1
             time_vals[network][semi].append(training_time)
 
 
-
-def get_files(env, net, batch_size, discount_factor, semi_gradient, layer, lr, lr_step_size, lr_gamma, config):
+def get_files(env, net, batch_size, discount_factor, semi_gradient, layer, lr, lr_step_size, lr_gamma, rep_mem, config):
     for num_episodes in config[ex.TRAIN_EPS_KEY]:
         file_name, _ = ex.get_file_name_and_config(env=env,
                                                    net=net,
@@ -36,6 +32,7 @@ def get_files(env, net, batch_size, discount_factor, semi_gradient, layer, lr, l
                                                    layer=layer,
                                                    lr_gamma=lr_gamma,
                                                    num_episodes=num_episodes,
+                                                   replay_memory=rep_mem,
                                                    seed="*")
 
         file_name = file_name.replace('[', ':left:').replace(']', '[]]').replace(':left:', '[[]')
@@ -44,9 +41,9 @@ def get_files(env, net, batch_size, discount_factor, semi_gradient, layer, lr, l
         return file_name, files
 
 
-def do_stuff(env, net, batch_size, discount_factor, semi_gradient, layer, lr, lr_step_size, lr_gamma, config):
+def do_stuff(env, net, batch_size, discount_factor, semi_gradient, layer, lr, lr_step_size, lr_gamma, rep_mem, config):
     file_name, files = get_files(env, net, batch_size, discount_factor, semi_gradient, layer, lr, lr_step_size,
-                                 lr_gamma, config)
+                                 lr_gamma, rep_mem, config)
 
     if files:
         obtain_data(files, file_name, semi_gradient, env.__name__, net.__name__)

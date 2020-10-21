@@ -1,8 +1,9 @@
 import torch
 from torch import nn, optim
-import torch.nn.functional as F
+
 from abc import ABC, abstractmethod
-from typing import Any, List, Tuple, Dict
+from typing import Any, Tuple, Dict
+
 import gym
 from ..policies import Policy
 

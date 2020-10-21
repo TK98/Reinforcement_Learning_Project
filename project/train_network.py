@@ -4,12 +4,7 @@ import torch.nn.functional as F
 import numpy as np
 from torch.optim import lr_scheduler
 
-from .networks import Network, ReplayMemory
-
-
-# def get_epsilon(it):
-#     epsilon = 1.0 - 0.95 * it / 1000 if it < 1000 else 0.05
-#     return epsilon
+from .networks import ReplayMemory
 
 
 def train_network(network, memory, optimizer, batch_size, semi_grad=True, use_replay=True):
@@ -45,8 +40,8 @@ def train_network(network, memory, optimizer, batch_size, semi_grad=True, use_re
     return loss.item()
 
 
-def train_episodes(env, policy, num_episodes, batch_size, learn_rate, semi_grad=True, use_replay=True,
-                   lr_step_size=100, lr_gamma=0.1, save_q_vals=False, replay_mem_size=1e5):
+def train_episodes(env, policy, num_episodes, batch_size, learn_rate, semi_grad, use_replay,
+                   lr_step_size, lr_gamma, save_q_vals, replay_mem_size):
     policy.train()
     network = policy.network
 
