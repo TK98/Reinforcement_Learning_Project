@@ -5,8 +5,10 @@ import pickle
 import shutil
 import random
 import time
+import itertools
 
 import torch
+import numpy as np
 import importlib
 import matplotlib.pyplot as plt
 
@@ -18,23 +20,24 @@ from project.test_network import test_episodes
 from project.train_network import train_episodes
 
 # constants
-ENV_KEY         = 'environments'
-NET_KEY         = 'networks'
-BAT_KEY         = 'batch-sizes'
-DIS_KEY         = 'discount-factors'
-GRA_KEY         = 'semi-gradient'
-LAYER_KEY       = 'nn_layers'
-TRAIN_EPS_KEY   = 'train-episodes'
-TEST_EPS_KEY    = 'test-episodes'
-LR_KEY          = 'lr'
-LR_SS_KEY       = 'lr_step_size'
-LR_GAMMA_KEY    = 'lr_gamma'
+ENV_KEY = 'environments'
+NET_KEY = 'networks'
+BAT_KEY = 'batch-sizes'
+DIS_KEY = 'discount-factors'
+GRA_KEY = 'semi-gradient'
+LAYER_KEY = 'nn_layers'
+TRAIN_EPS_KEY = 'train-episodes'
+TEST_EPS_KEY = 'test-episodes'
+LR_KEY = 'lr'
+LR_SS_KEY = 'lr_step_size'
+LR_GAMMA_KEY = 'lr_gamma'
+REP_MEM_KEY = 'replay_memory'
 
 # settings
 seed_base = 42
 num_runs = 30
 overwrite_existing_files = False
-config_file = "experiments_config.json"
+config_file = "experiments_config_windy.json"
 save_dir = "saved_experiments"
 
 
@@ -65,25 +68,27 @@ def get_file_name_and_config(env,
                              lr_gamma,
                              layer,
                              num_episodes,
+                             replay_memory,
                              seed):
-
     gradient_mode = 'semi' if semi_gradient else 'full'
     env_name = env.__name__
     net_name = net.__name__
-    file_name = f'{gradient_mode}/{env_name}/{net_name}_{batch_size}_{discount_factor}_{semi_gradient}_{lr}_{lr_step_size}_{lr_gamma}_{layer}_{num_episodes}_{seed}'
+    file_name = f'{gradient_mode}/{env_name}/{net_name}_{batch_size}_{discount_factor}_{semi_gradient}_' \
+                f'{lr}_{lr_step_size}_{lr_gamma}_{layer}_{num_episodes}_{replay_memory}_{seed}'
 
     current_config = {
-        ENV_KEY:        env_name,
-        NET_KEY:        net_name,
-        BAT_KEY:        batch_size,
-        DIS_KEY:        discount_factor,
-        GRA_KEY:        gradient_mode,
-        LR_KEY:         lr,
-        LR_SS_KEY:      lr_step_size,
-        LR_GAMMA_KEY:   lr_gamma,
-        LAYER_KEY:      layer,
-        "seed":         seed,
-        TRAIN_EPS_KEY:  num_episodes
+        ENV_KEY: env_name,
+        NET_KEY: net_name,
+        BAT_KEY: batch_size,
+        DIS_KEY: discount_factor,
+        GRA_KEY: gradient_mode,
+        LR_KEY: lr,
+        LR_SS_KEY: lr_step_size,
+        LR_GAMMA_KEY: lr_gamma,
+        LAYER_KEY: layer,
+        "seed": seed,
+        TRAIN_EPS_KEY: num_episodes,
+        REP_MEM_KEY: replay_memory
     }
 
     return file_name, current_config
@@ -97,13 +102,13 @@ def set_seeds(seed, env):
 
 
 def save_file(results, current_config, file_name):
-    (episode_durations_train, 
-    losses,
-    episode_rewards_train, 
-    timespan, 
-    episode_durations_test, 
-    episode_rewards_test,
-    q_vals) = results
+    (episode_durations_train,
+     losses,
+     episode_rewards_train,
+     timespan,
+     episode_durations_test,
+     episode_rewards_test,
+     q_vals) = results
 
     data = {
         "config": current_config,
@@ -146,10 +151,12 @@ def save_side_plot(plot_1, plot_1_name, plot_2, plot_2_name, file_name, extensio
     plt.savefig(f'{save_dir}/{file_name}.{extension}')
     plt.close(fig)
 
+
 def save_train_plot(episode_durations, episode_losses, file_name, smoothing=10):
     save_side_plot(smooth(episode_durations, smoothing), 'Episode durations per episode',
                    smooth(episode_losses, smoothing), 'Average loss per episode',
                    file_name + '_train')
+
 
 def save_test_plot(episode_durations, episode_rewards, file_name, smoothing=10):
     save_side_plot(smooth(episode_durations, smoothing), 'Episode durations per episode',
@@ -158,36 +165,39 @@ def save_test_plot(episode_durations, episode_rewards, file_name, smoothing=10):
 
 
 def do_loop(config, func):
-    for env in config[ENV_KEY]:
-        for net in config[NET_KEY]:
-            for batch_size in config[BAT_KEY]:
-                for discount_factor in config[DIS_KEY]:
-                    for semi_gradient in config[GRA_KEY]:
-                        for layer in config[LAYER_KEY]:
-                            for lr in config[LR_KEY]:
-                                for lrss in config[LR_SS_KEY]:
-                                    for lr_gamma in config[LR_GAMMA_KEY]:
-                                        yield func(env, net, batch_size, discount_factor, semi_gradient,
-                                                   layer, lr, lrss, lr_gamma, config)
+    runs_settings = itertools.product(config[ENV_KEY],
+                                      config[NET_KEY],
+                                      config[BAT_KEY],
+                                      config[DIS_KEY],
+                                      config[GRA_KEY],
+                                      config[LAYER_KEY],
+                                      config[LR_KEY],
+                                      config[LR_SS_KEY],
+                                      config[LR_GAMMA_KEY],
+                                      config[REP_MEM_KEY])
+
+    for run_settings in runs_settings:
+        yield func(*run_settings, config)
 
 
-def run(env, net, batch_size, discount_factor, semi_gradient, layer, lr, lr_step_size, lr_gamma, config):
+def run(env, net, batch_size, discount_factor, semi_gradient, layer, lr, lr_step_size, lr_gamma, replay_mem, config):
     save_q_vals = env.__name__ in ['ASplit', 'NStateRandomWalk']
     for seed_iter in range(num_runs):
         seed = seed_base + seed_iter
 
         for num_episodes in config[TRAIN_EPS_KEY]:
             file_name, current_config = get_file_name_and_config(env=env,
-                                                                net=net,
-                                                                batch_size=batch_size,
-                                                                discount_factor=discount_factor,
-                                                                semi_gradient=semi_gradient,
-                                                                lr=lr,
-                                                                lr_step_size=lr_step_size,
-                                                                lr_gamma=lr_gamma,
-                                                                layer=layer,
-                                                                num_episodes=num_episodes,
-                                                                seed=seed)
+                                                                 net=net,
+                                                                 batch_size=batch_size,
+                                                                 discount_factor=discount_factor,
+                                                                 semi_gradient=semi_gradient,
+                                                                 lr=lr,
+                                                                 lr_step_size=lr_step_size,
+                                                                 lr_gamma=lr_gamma,
+                                                                 layer=layer,
+                                                                 num_episodes=num_episodes,
+                                                                 replay_memory=replay_mem,
+                                                                 seed=seed)
 
             print('Running: ', current_config)
 
@@ -210,16 +220,17 @@ def run(env, net, batch_size, discount_factor, semi_gradient, layer, lr, lr_step
 
             # Training
             start = time.time()
-            
+
             episode_durations_train, losses, episode_rewards_train, q_vals = train_episodes(env=env_ins,
-                                                                                    policy=policy,
-                                                                                    num_episodes=num_episodes,
-                                                                                    batch_size=batch_size,
-                                                                                    learn_rate=lr,
-                                                                                    semi_grad=semi_gradient,
-                                                                                    save_q_vals=save_q_vals,
-                                                                                    lr_step_size=lr_step_size,
-                                                                                    lr_gamma=lr_gamma)
+                                                                                            policy=policy,
+                                                                                            num_episodes=num_episodes,
+                                                                                            batch_size=batch_size,
+                                                                                            learn_rate=lr,
+                                                                                            semi_grad=semi_gradient,
+                                                                                            save_q_vals=save_q_vals,
+                                                                                            lr_step_size=lr_step_size,
+                                                                                            lr_gamma=lr_gamma,
+                                                                                            replay_mem_size=replay_mem)
             timespan = time.time() - start
             print(f'Training finished in {timespan} seconds')
 
@@ -246,16 +257,14 @@ def run(env, net, batch_size, discount_factor, semi_gradient, layer, lr, lr_step
             save_file(results, current_config, file_name)
 
 
-def main(config):
-    do_loop(config, run)
-
-if __name__ == "__main__":
+def main():
     if overwrite_existing_files:
         answer = input(
             """
             Do you want to overwrite all the saved files?
             All the files will be deleted before starting.
             (y/n)   """)
+
         if answer == 'y':
             try:
                 shutil.rmtree(save_dir)
@@ -268,4 +277,28 @@ if __name__ == "__main__":
             sys.exit(0)
 
     config = load_config()
-    main(config)
+
+    for _ in do_loop(config, run):
+        pass
+
+
+if __name__ == "__main__":
+    main()
+
+# ========================================================================= #
+#        Memorial for the best for for for ... for loop ever coded:         #
+# ========================================================================= #
+
+# def do_loop(config, func):
+#     for env in config[ENV_KEY]:
+#         for net in config[NET_KEY]:
+#             for batch_size in config[BAT_KEY]:
+#                 for discount_factor in config[DIS_KEY]:
+#                     for semi_gradient in config[GRA_KEY]:
+#                         for layer in config[LAYER_KEY]:
+#                             for lr in config[LR_KEY]:
+#                                 for lrss in config[LR_SS_KEY]:
+#                                     for lr_gamma in config[LR_GAMMA_KEY]:
+#                                         for replay_memory in config[REP_MEM_KEY]:
+#                                             yield func(env, net, batch_size, discount_factor, semi_gradient,
+#                                                        layer, lr, lrss, lr_gamma, replay_memory, config)

@@ -6,9 +6,11 @@ from torch.optim import lr_scheduler
 
 from .networks import Network, ReplayMemory
 
-def get_epsilon(it):
-    epsilon = 1.0 - 0.95 * it / 1000 if it < 1000 else 0.05
-    return epsilon
+
+# def get_epsilon(it):
+#     epsilon = 1.0 - 0.95 * it / 1000 if it < 1000 else 0.05
+#     return epsilon
+
 
 def train_network(network, memory, optimizer, batch_size, semi_grad=True, use_replay=True):
     if use_replay:
@@ -44,14 +46,13 @@ def train_network(network, memory, optimizer, batch_size, semi_grad=True, use_re
 
 
 def train_episodes(env, policy, num_episodes, batch_size, learn_rate, semi_grad=True, use_replay=True,
-                   lr_step_size=100, lr_gamma=0.1, save_q_vals=False):
+                   lr_step_size=100, lr_gamma=0.1, save_q_vals=False, replay_mem_size=1e5):
     policy.train()
     network = policy.network
 
-    memory = ReplayMemory(1e5)
+    memory = ReplayMemory(replay_mem_size)
     optimizer = optim.Adam(network.parameters(), learn_rate)
     scheduler = lr_scheduler.StepLR(optimizer, lr_step_size, lr_gamma)
-    # policy = policy(network, 0.05)
 
     global_steps = 0  # Count the steps (do not reset at episode start, to compute epsilon)
     episode_durations = []
@@ -100,4 +101,5 @@ def train_episodes(env, policy, num_episodes, batch_size, learn_rate, semi_grad=
                 break
 
     q_vals = torch.cat(q_vals, dim=1).T if save_q_vals else None
+
     return episode_durations, losses, episode_rewards, q_vals
