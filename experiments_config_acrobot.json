@@ -9,6 +9,9 @@
     "batch-sizes": [
         32
     ],
+    "replay_memory": [
+        100000
+    ],
     "discount-factors": [
         0.99
     ],
