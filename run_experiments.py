@@ -6,6 +6,7 @@ import shutil
 import random
 import time
 import itertools
+import argparse
 
 import torch
 import numpy as np
@@ -35,11 +36,11 @@ SEED_KEY = 'seed'
 seed_base = 42
 num_runs = 30
 overwrite_existing_files = False
-config_file = "experiments_config_windy.json"
+# config_file = "experiments_config_windy.json"
 save_dir = "saved_experiments"
 
 
-def load_config(config_file=config_file):
+def load_config(config_file):
     def init_classes(config, module_name):
         # Convert class name strings to class instances
         for i in range(len(config[module_name])):
@@ -260,7 +261,7 @@ def run(env, net, batch_size, discount_factor, semi_gradient, layer, lr, lr_step
             save_file(results, current_config, file_name)
 
 
-def main():
+def main(experiment_file):
     if overwrite_existing_files:
         answer = input(
             """
@@ -279,14 +280,20 @@ def main():
         else:
             sys.exit(0)
 
-    config = load_config()
+    config = load_config(experiment_file)
 
     for _ in do_loop(config, run):
         pass
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description='Run experiments.')
+    parser.add_argument('file', type=str, help='The experimental file name.')
+    parser.add_argument('--save_dir', type=str, default="saved_experiments",
+                        help='Directory to save results to.')
+    args = parser.parse_args()
+    save_dir = args.save_dir
+    main(args.file)
 
 # ========================================================================= #
 #        Memorial for the best for for for ... for loop ever coded:         #

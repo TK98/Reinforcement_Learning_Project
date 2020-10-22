@@ -7,7 +7,7 @@
         "SARSANetwork"
     ],
     "batch-sizes": [
-        32
+        64
     ],
     "replay_memory": [
         100000
