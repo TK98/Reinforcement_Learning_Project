@@ -12,7 +12,6 @@ In our repository, you will find an implementation for both SARSA and Q-learning
 - `./experiments_config_*.json` are files which contain the hyperparameters for different experiments.
 - `./run_experiments.py` is the file which is used to fully run one of our experiments.
 - `./show_q_vals.py` is used to ...
-- `./wgw_sig_test.py` is used to ...
 
 ## Installation instructions
 To run any of our code, install the conda environment as given in `./env.yml` using `conda env create --file env.yml`.
