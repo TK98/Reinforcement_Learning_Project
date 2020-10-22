@@ -41,6 +41,8 @@ save_dir = "saved_experiments"
 
 
 def load_config(config_file):
+    """ Loads the experiment configurations from the json file specified by 'config_file'. """
+
     def init_classes(config, module_name):
         # Convert class name strings to class instances
         for i in range(len(config[module_name])):
@@ -70,6 +72,9 @@ def get_file_name_and_config(env,
                              replay_memory,
                              seed):
 
+    """ Creates a unique file name based on the provided arguments. Furthermore, a config dict is returned with which
+    the provided argument values can be accessed. """
+
     gradient_mode = 'semi' if semi_gradient else 'full'
     env_name = env.__name__
     net_name = net.__name__
@@ -95,6 +100,7 @@ def get_file_name_and_config(env,
 
 
 def set_seeds(seed, env):
+    """ For reproducibility, seeds 'random', 'numpy', 'PyTorch' and the gym 'env' with the provided seed. """
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
@@ -102,6 +108,13 @@ def set_seeds(seed, env):
 
 
 def save_file(results, current_config, file_name):
+    """
+    Pickles the results.
+    :param results: The experiment results.
+    :param current_config: The config dict.
+    :param file_name: The name for the pickle file. This name should be unique to the experiment parameters.
+    :return: None
+    """
     (episode_durations_train,
      losses,
      episode_rewards_train,
@@ -128,6 +141,7 @@ def save_file(results, current_config, file_name):
 
 
 def smooth(x, N):
+    """ Smooths the values provided in 'x'. N defines over how many consecutive values to smooth. """
     cumsum = np.cumsum(np.insert(x, 0, 0))
     return (cumsum[N:] - cumsum[:-N]) / float(N)
 
@@ -142,6 +156,7 @@ def smooth(x, N):
 #     plt.savefig(f'{save_dir}/{file_name}_{mode}.pdf')
 
 def save_side_plot(plot_1, plot_1_name, plot_2, plot_2_name, file_name, extension='pdf'):
+    """ Saves two plots side by side. """
     fig, axes = plt.subplots(nrows=1, ncols=2)
     axes[0].plot(plot_1)
     axes[0].set_title(plot_1_name)
@@ -153,12 +168,14 @@ def save_side_plot(plot_1, plot_1_name, plot_2, plot_2_name, file_name, extensio
 
 
 def save_train_plot(episode_durations, episode_losses, file_name, smoothing=10):
+    """ Plots and saves the training results. """
     save_side_plot(smooth(episode_durations, smoothing), 'Episode durations per episode',
                    smooth(episode_losses, smoothing), 'Average loss per episode',
                    file_name + '_train')
 
 
 def save_test_plot(episode_durations, episode_rewards, file_name, smoothing=10):
+    """ Plots and saves the testing results. """
     save_side_plot(smooth(episode_durations, smoothing), 'Episode durations per episode',
                    smooth(episode_rewards, smoothing), 'Rewards per episode',
                    file_name + '_test')
@@ -166,7 +183,7 @@ def save_test_plot(episode_durations, episode_rewards, file_name, smoothing=10):
 
 def do_loop(config, func):
     """ Creates the cartesian product from all lists in config.
-    Each iteration from do_loop runs 'func' once with the next element in this cartesian product."""
+    Each iteration from do_loop runs 'func' once with the next element in this cartesian product. """
 
     runs_settings = itertools.product(config[ENV_KEY],
                                       config[NET_KEY],
@@ -184,6 +201,21 @@ def do_loop(config, func):
 
 
 def run(env, net, batch_size, discount_factor, semi_gradient, layer, lr, lr_step_size, lr_gamma, replay_mem, config):
+    """
+    Runs the experiments.
+    :param env: The environment on which to run the experiments.
+    :param net: The network used for the experiments.
+    :param batch_size: The size of the batches sampled from the replay memory buffer.
+    :param discount_factor: The discount factor with which to scale the Q values of the next step.
+    :param semi_gradient: Whether to use semi gradient or full gradient.
+    :param layer: A list where each element is the number of nodes in a layer in the network.
+    :param lr: The learning rate.
+    :param lr_step_size: For the learning rate scheduler. After how many episodes to scale the learning rate.
+    :param lr_gamma: The scaling factor for the learning rate scheduler.
+    :param replay_mem: The size of the memory replay buffer.
+    :param config: The config dict with which to access the parameters for this specific experiments.
+    :return: None
+    """
     save_q_vals = env.__name__ in ['ASplit', 'NStateRandomWalk']
     for seed_iter in range(num_runs):
         seed = seed_base + seed_iter
@@ -262,6 +294,8 @@ def run(env, net, batch_size, discount_factor, semi_gradient, layer, lr, lr_step
 
 
 def main(experiment_file):
+    """ Loads the configurations for the experiments and run them. """
+
     if overwrite_existing_files:
         answer = input(
             """
@@ -280,6 +314,7 @@ def main(experiment_file):
         else:
             sys.exit(0)
 
+    # The configurations for this experiment.
     config = load_config(experiment_file)
 
     # Each iteration in the loop performs one experiment.
