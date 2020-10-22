@@ -7,16 +7,8 @@ import numpy as np
 import pandas as pd
 import run_experiments as ex
 
-# def save_side_plot(plot_1, plot_1_name, plot_2, plot_2_name, file_name, title, extension='pdf'):
-#     fig, axes = plt.subplots(nrows=1, ncols=2)
-#     axes[0].plot(plot_1)
-#     axes[0].set_title(plot_1_name)
-#     axes[1].plot(plot_2)
-#     axes[1].set_title(plot_2_name)
-#     fig.tight_layout()
-#     plt.title(title)
-#     plt.savefig(f'{ex.save_dir}/{file_name}.{extension}')
-#     plt.close(fig)
+plot_mode = ''
+save_dir = ''
 
 
 def plot(data_list):
@@ -29,11 +21,25 @@ def plot(data_list):
         data = pd.concat([data for (data_env, data) in data_tuples if data_env == env],
                          axis=1)
 
-        sns_plot = sns.lineplot(data=data, color=sns.color_palette())
+        sns_plot = sns.lineplot(data=data, color=sns.color_palette(), ci=80)
 
-        sns_plot.set_title(f'{env}')
+        if plot_mode == 'time':
+            print(data.mean().round(2))
+
+        leg_lines = sns_plot.legend().get_lines()
+
+        for i in range(len(leg_lines)):
+            marker = ':' if i % 2 == 0 else '-'
+            sns_plot.lines[i].set_linestyle(marker)
+            leg_lines[i].set_linestyle(marker)
+
+        title = input("Environment name for plot: ")
+
+        sns_plot.set_title(f'Training {plot_mode} over episodes for {title}')
         sns_plot.set_xlabel("Episodes")
-        sns_plot.set_ylabel("Episode duration per episode")
+        sns_plot.set_ylabel(f'Training {plot_mode} per episode{" in seconds" if plot_mode == "time" else ""}')
+
+        # sns_plot.set(ylim=(-100, 0))
 
         plt.show()
         plt.clf()
@@ -43,36 +49,28 @@ def plot(data_list):
 
 def aggregate_data(files, file_name, semi_gradient, env_name, net_name):
     gradient_mode = 'Semi-gradient' if semi_gradient else 'Full-gradient'
-    epi_dur_train = []
-    # losses = []
+    data = []
 
-    # epi_dur_test = []
-    # epi_r_test = []
     for file in files:
         with open(file, 'rb') as f:
             p = pickle.load(f)
-            epi_dur_train.append(p['train']['episode_durations'])
-            # losses.append(p['train']['losses'])
-            # epi_dur_test.append(p['test']['episode_durations'])
-            # epi_r_test.append(p['test']['episode_rewards'])
 
-    # epi_dur_train = np.array(epi_dur_train).mean(axis=0)
-    df1 = pd.DataFrame(epi_dur_train).T
-    df1.columns=[f'{gradient_mode} {net_name}' for i in range(df1.shape[1])]
+            if plot_mode == "reward":
+                data.append(p['train']['episode_rewards'])
+            elif plot_mode == "time":
+                 data.append([p['train']['duration']])
 
-    # df2 = pd.DataFrame(losses).T
-    # df2.columns=['Losses' for i in range(df2.shape[1])]
+    df = pd.DataFrame(data)
 
-    # df3 = pd.DataFrame(epi_dur_test).T
-    # df3.columns=['Duration test episodes' for i in range(df3.shape[1])]
+    if plot_mode == "reward":
+        df = df.T
 
-    # df4 = pd.DataFrame(epi_r_test)
-    # df4.columns=['Test rewards' for i in range(df4.shape[1])]
+    df.columns=[f'{gradient_mode} {net_name}' for i in range(df.shape[1])]
 
-    return df1
+    return df
 
 
-def get_files(env, net, batch_size, discount_factor, semi_gradient, layer, lr, lr_step_size, lr_gamma, config):
+def get_files(env, net, batch_size, discount_factor, semi_gradient, layer, lr, lr_step_size, lr_gamma, replay_memory, config):
     for num_episodes in config[ex.TRAIN_EPS_KEY]:
         file_name, _ = ex.get_file_name_and_config(env=env,
                                                    net=net,
@@ -83,17 +81,18 @@ def get_files(env, net, batch_size, discount_factor, semi_gradient, layer, lr, l
                                                    lr_step_size=lr_step_size,
                                                    layer=layer,
                                                    lr_gamma=lr_gamma,
+                                                   replay_memory=replay_memory,
                                                    num_episodes=num_episodes,
                                                    seed="*")
 
         file_name = file_name.replace('[', ':left:').replace(']', '[]]').replace(':left:', '[[]')
-        files = glob(f'{ex.save_dir}/{file_name}.pkl')
+        files = glob(f'{save_dir}/{file_name}.pkl')
 
         return file_name, files
 
 
-def do_stuff(env, net, batch_size, discount_factor, semi_gradient, layer, lr, lr_step_size, lr_gamma, config):
-    file_name, files = get_files(env, net, batch_size, discount_factor, semi_gradient, layer, lr, lr_step_size, lr_gamma, config)
+def do_stuff(env, net, batch_size, discount_factor, semi_gradient, layer, lr, lr_step_size, lr_gamma, rep_mem, config):
+    file_name, files = get_files(env, net, batch_size, discount_factor, semi_gradient, layer, lr, lr_step_size, lr_gamma, rep_mem, config)
 
     if files:
         return env.__name__, aggregate_data(files, file_name, semi_gradient, env.__name__, net.__name__)
@@ -105,7 +104,10 @@ def main(config):
 
 if __name__ == "__main__":
     config_filename = 'experiments_config_cartpole.json'
+    save_dir = "saved_experiments_v2"
     config = ex.load_config(config_filename)
+
+    plot_mode = "time" # reward or time
 
     main(config)
 
