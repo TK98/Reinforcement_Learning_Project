@@ -282,6 +282,7 @@ def main(experiment_file):
 
     config = load_config(experiment_file)
 
+    # Each iteration in the loop performs one experiment.
     for _ in do_loop(config, run):
         pass
 

@@ -14,6 +14,7 @@ class DeepQNetwork(Network):
     def __init__(self, in_features=4, out_features=2, architecture=None, discount_factor=0.8):
         nn.Module.__init__(self)
 
+        # If no architecture is provided, we create an 'empty' architecture (no hidden layers).
         if architecture is None:
             architecture = []
 
@@ -30,6 +31,7 @@ class DeepQNetwork(Network):
         self.discount_factor = discount_factor
 
     def forward(self, x):
+        """ Forward pass through the network. """
         out = self.model.forward(x)
         return out
 
@@ -49,6 +51,7 @@ class DeepQNetwork(Network):
         return torch.gather(out, 1, actions)
 
     def compute_v_vals(self, states):
+        """ Not implemented for the deep Q network."""
         pass
 
     def compute_targets(self, reward=None, next_state=None, done=None, **kwargs):
@@ -76,9 +79,11 @@ class DeepQNetwork(Network):
         return reward + adjusted_dones * self.discount_factor * next_max
 
     def start_episode(self, env, policy):
+        """ Resets the environment and stores the state. """
         self.state = env.reset()
 
     def step_episode(self, env, policy):
+        """ Takes a step using the state saved in the network. """
         # Save old variables
         state = self.state
 
@@ -93,6 +98,7 @@ class DeepQNetwork(Network):
 
     @staticmethod
     def memory_to_input(transitions) -> Dict[str, torch.Tensor]:
+        """ Transforms a training batch to Torch tensors such that they can be used with the network. """
         state, action, reward, next_state, done = zip(*transitions)
 
         # convert to PyTorch and define types

@@ -1,5 +1,12 @@
 def test_episodes(env, policy, num_episodes):
-    # policy = policy(network, 0.0)
+    """
+    Given an environment and a policy, evaluates the policy for num_episodes episodes.
+    :param env: The environment on which to test the policy.
+    :param policy: The policy that's being evaluated. This policy should contains the trained policy network.
+    :param num_episodes: For how many episodes to evaluate the policy.
+    :return: How many steps each episode took to complete, and the rewards per episode.
+    """
+
     policy.test()
     network = policy.network
 
@@ -7,12 +14,13 @@ def test_episodes(env, policy, num_episodes):
     episode_durations = []
     episode_rewards = []
     for i in range(num_episodes):
+        # The network will reset the environment and store the current state. Steps are taken through the network.
         network.start_episode(env, policy)
 
         steps = 0
         rewards = 0
         while True:
-            experience, done = network.step_episode(env, policy)
+            experience, done = network.step_episode(env, policy)  # The network determines Q values and takes a step.
 
             rewards += experience[2]
             global_steps += 1

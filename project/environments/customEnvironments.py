@@ -7,6 +7,7 @@ import math
 from math import pi, cos, sin
 
 
+# TODO: Delet pls?
 # things to do for each env:
 #   - step, reset functions, seed
 #   - action_space, reward_range
@@ -15,7 +16,23 @@ from math import pi, cos, sin
 #   - observation_space attribute
 #   - close function
 
+# This file contains custom implemented environments to conduct the semi-grad vs full-grad experiments. Furthermore, we
+# included some environments from the gym env library. The following environments are included in this file:
+# - BairdsCounterExample
+# - A-split
+# - n-state random walk
+# - Windy gridworld
+# - Cartpole
+# - Acrobot
+
+# Each environment at least includes the following functions:
+# Reset. This resets the environment to a starting state and returns that state.
+# Step. Given an action, executes that action and returns the next state, reward, and if we reached the terminal state.
+# Seed. Seeds the gym env environment.
+
+
 class OneHotEnv(gym.Env):
+    """ Abstract class that defines environments with discrete spaces and one-hot representation. """
     def __init__(self, n_states):
         self.n_states = n_states
         self.seed()
@@ -24,6 +41,7 @@ class OneHotEnv(gym.Env):
         onehot = np.zeros(self.n_states)
         onehot[state] = 1
         return onehot
+
 
 class BairdsCounterExample(OneHotEnv):
     reward_range = (0, 0)
@@ -50,6 +68,7 @@ class BairdsCounterExample(OneHotEnv):
     def seed(self, seed=None):
         self.np_random, seed = seeding.np_random(seed)
         return [seed]
+
 
 class ASplit(OneHotEnv):
     reward_range = (0, 1)
@@ -94,6 +113,7 @@ class ASplit(OneHotEnv):
         self.np_random, seed = seeding.np_random(seed)
         return [seed]
 
+
 # TODO implement this, but with actions...?
 class NStateRandomWalk(OneHotEnv):
     reward_range = (0, 1)
@@ -129,6 +149,7 @@ class NStateRandomWalk(OneHotEnv):
     def seed(self, seed=None):
         self.np_random, seed = seeding.np_random(seed)
         return [seed]
+
 
 class WindyGridWorld(OneHotEnv):
     reward_range = (-1, -1)
@@ -191,6 +212,7 @@ class WindyGridWorld(OneHotEnv):
         # return (self.x, self.y), -1, done, ""
 
     def get_onehot(self):
+        """ Gets the one-hot representation of the current state. """
         grid = np.zeros((self.y_u + 1, self.x_u + 1))
         grid[self.y, self.x] = 1
 
