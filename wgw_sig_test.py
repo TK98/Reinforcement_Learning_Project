@@ -5,9 +5,13 @@ import numpy as np
 import scipy.stats as stats
 import run_experiments as ex
 
+# Code to perform a statistical significance test between full-grad and semi-grad on the results from the windy
+# gridworld environment.
+
 
 def obtain_data(files):
-
+    """ Extracts test duration (path length) and training time from files and put it in the global variables test_vals
+    and time_vals."""
     for file in files:
         with open(file, 'rb') as f:
 
@@ -21,6 +25,7 @@ def obtain_data(files):
 
 
 def get_files(env, net, batch_size, discount_factor, semi_gradient, layer, lr, lr_step_size, lr_gamma, rep_mem, config):
+    """ Loads the files from disk containing the results obtained in windy gridworld. """
     for num_episodes in config[ex.TRAIN_EPS_KEY]:
         file_name, _ = ex.get_file_name_and_config(env=env,
                                                    net=net,
@@ -42,15 +47,20 @@ def get_files(env, net, batch_size, discount_factor, semi_gradient, layer, lr, l
 
 
 def do_stuff(env, net, batch_size, discount_factor, semi_gradient, layer, lr, lr_step_size, lr_gamma, rep_mem, config):
+
+    # Load the files.
     file_name, files = get_files(env, net, batch_size, discount_factor, semi_gradient, layer, lr, lr_step_size,
                                  lr_gamma, rep_mem, config)
 
+    # If data loads successfully, extract the data.
     if files:
         obtain_data(files, file_name, semi_gradient, env.__name__, net.__name__)
     pass
 
 
 def main(config):
+
+    # Obtain data stores the data in these variables
     global test_vals
     global time_vals
 
@@ -109,6 +119,7 @@ def main(config):
 
 
 if __name__ == "__main__":
+    # The variables in these configurations are used to name the result files.
     config_filename = 'experiments_config_windy.json'
     config = ex.load_config(config_filename)
 
