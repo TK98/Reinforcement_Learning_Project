@@ -101,6 +101,7 @@ def get_file_name_and_config(env,
 
 def set_seeds(seed, env):
     """ For reproducibility, seeds 'random', 'numpy', 'PyTorch' and the gym 'env' with the provided seed. """
+    
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
@@ -115,6 +116,7 @@ def save_file(results, current_config, file_name):
     :param file_name: The name for the pickle file. This name should be unique to the experiment parameters.
     :return: None
     """
+
     (episode_durations_train,
      losses,
      episode_rewards_train,
@@ -142,6 +144,7 @@ def save_file(results, current_config, file_name):
 
 def smooth(x, N):
     """ Smooths the values provided in 'x'. N defines over how many consecutive values to smooth. """
+
     cumsum = np.cumsum(np.insert(x, 0, 0))
     return (cumsum[N:] - cumsum[:-N]) / float(N)
 
@@ -157,6 +160,7 @@ def smooth(x, N):
 
 def save_side_plot(plot_1, plot_1_name, plot_2, plot_2_name, file_name, extension='pdf'):
     """ Saves two plots side by side. """
+
     fig, axes = plt.subplots(nrows=1, ncols=2)
     axes[0].plot(plot_1)
     axes[0].set_title(plot_1_name)
@@ -169,6 +173,7 @@ def save_side_plot(plot_1, plot_1_name, plot_2, plot_2_name, file_name, extensio
 
 def save_train_plot(episode_durations, episode_losses, file_name, smoothing=10):
     """ Plots and saves the training results. """
+
     save_side_plot(smooth(episode_durations, smoothing), 'Episode durations per episode',
                    smooth(episode_losses, smoothing), 'Average loss per episode',
                    file_name + '_train')
@@ -176,6 +181,7 @@ def save_train_plot(episode_durations, episode_losses, file_name, smoothing=10):
 
 def save_test_plot(episode_durations, episode_rewards, file_name, smoothing=10):
     """ Plots and saves the testing results. """
+
     save_side_plot(smooth(episode_durations, smoothing), 'Episode durations per episode',
                    smooth(episode_rewards, smoothing), 'Rewards per episode',
                    file_name + '_test')
@@ -216,6 +222,7 @@ def run(env, net, batch_size, discount_factor, semi_gradient, layer, lr, lr_step
     :param config: The config dict with which to access the parameters for this specific experiments.
     :return: None
     """
+
     save_q_vals = env.__name__ in ['ASplit', 'NStateRandomWalk']
     for seed_iter in range(num_runs):
         seed = seed_base + seed_iter
