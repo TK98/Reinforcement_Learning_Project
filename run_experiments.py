@@ -41,6 +41,9 @@ save_dir = "saved_experiments"
 
 
 def load_config(config_file):
+    """
+    Load the config file and convert environment and module names to classes
+    """
     def init_classes(config, module_name):
         # Convert class name strings to class instances
         for i in range(len(config[module_name])):
@@ -69,7 +72,9 @@ def get_file_name_and_config(env,
                              num_episodes,
                              replay_memory,
                              seed):
-
+    """
+    Get the file name for output and the current config to be saved
+    """
     gradient_mode = 'semi' if semi_gradient else 'full'
     env_name = env.__name__
     net_name = net.__name__
@@ -95,6 +100,9 @@ def get_file_name_and_config(env,
 
 
 def set_seeds(seed, env):
+    """
+    Set random number seed to all modules
+    """
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
@@ -109,6 +117,10 @@ def save_file(results, current_config, file_name):
      episode_durations_test,
      episode_rewards_test,
      q_vals) = results
+
+    """
+    Save the results to specified file
+    """
 
     data = {
         "config": current_config,
@@ -128,18 +140,12 @@ def save_file(results, current_config, file_name):
 
 
 def smooth(x, N):
+    """
+    Returns smoother data for plotting
+    """
     cumsum = np.cumsum(np.insert(x, 0, 0))
     return (cumsum[N:] - cumsum[:-N]) / float(N)
 
-
-# def save_plot(episode_durations, rewards, file_name, mode='train'):
-#     fig, axes = plt.subplots(nrows=1, ncols=2)
-#     axes[0].plot(smooth(episode_durations, 10))
-#     axes[0].set_title('Episode durations per episode')
-#     axes[1].plot(smooth(rewards, 10))
-#     axes[1].set_title('Reward per episode')
-#     fig.tight_layout()
-#     plt.savefig(f'{save_dir}/{file_name}_{mode}.pdf')
 
 def save_side_plot(plot_1, plot_1_name, plot_2, plot_2_name, file_name, extension='pdf'):
     fig, axes = plt.subplots(nrows=1, ncols=2)
@@ -184,9 +190,13 @@ def do_loop(config, func):
 
 
 def run(env, net, batch_size, discount_factor, semi_gradient, layer, lr, lr_step_size, lr_gamma, replay_mem, config):
+    """
+    Runs experiments for the given settings and hyperparameters
+    """
+    # saves the Q values for environments A-Split and N-State Random Walk
     save_q_vals = env.__name__ in ['ASplit', 'NStateRandomWalk']
     for seed_iter in range(num_runs):
-        seed = seed_base + seed_iter
+        seed = seed_base + seed_iter # next seed
 
         for num_episodes in config[TRAIN_EPS_KEY]:
             file_name, current_config = get_file_name_and_config(env=env,
@@ -204,24 +214,27 @@ def run(env, net, batch_size, discount_factor, semi_gradient, layer, lr, lr_step
 
             print('Running: ', current_config)
 
+            # Skip the current run if the data file already exists
             if os.path.isfile(f'{save_dir}/{file_name}.pkl'):
                 print('Data file for the current run already exists. Skip it.')
                 continue
 
             os.makedirs(f'{save_dir}/{os.path.dirname(file_name)}', exist_ok=True)
 
+            # Instantiate environment object
             env_ins = env()
 
             # set the seeds in every iteration
             set_seeds(seed, env=env_ins)
 
+            # Instantiate network object by hyperparameters
             net_ins = net(in_features=env_ins.shape,
                           out_features=env_ins.action_space.n,
                           architecture=layer,
                           discount_factor=discount_factor)
             policy = EpsilonGreedyPolicy(net_ins)
 
-            # Training
+            # Start training
             start = time.time()
 
             episode_durations_train, losses, episode_rewards_train, q_vals = train_episodes(env=env_ins,
@@ -238,11 +251,11 @@ def run(env, net, batch_size, discount_factor, semi_gradient, layer, lr, lr_step
             timespan = time.time() - start
             print(f'Training finished in {timespan} seconds')
 
-            torch.save(net_ins.state_dict(), f'{save_dir}/{file_name}.pt')
+            torch.save(net_ins.state_dict(), f'{save_dir}/{file_name}.pt') # save the NN weights
 
             save_train_plot(episode_durations_train, losses, file_name)
 
-            # Testing
+            # Start testing
             episode_durations_test = list()
             episode_rewards_test = list()
 
@@ -258,6 +271,8 @@ def run(env, net, batch_size, discount_factor, semi_gradient, layer, lr, lr_step
 
             results = (episode_durations_train, losses, episode_rewards_train,
                        timespan, episode_durations_test, episode_rewards_test, q_vals)
+
+            # Save results
             save_file(results, current_config, file_name)
 
 
