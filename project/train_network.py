@@ -8,6 +8,16 @@ from .networks import ReplayMemory
 
 
 def train_network(network, memory, optimizer, batch_size, semi_grad=True, use_replay=True):
+    """
+
+    :param network:
+    :param memory:
+    :param optimizer:
+    :param batch_size:
+    :param semi_grad:
+    :param use_replay:
+    :return:
+    """
     if use_replay:
         # don't learn without some decent experience
         if len(memory) < batch_size:
@@ -42,6 +52,24 @@ def train_network(network, memory, optimizer, batch_size, semi_grad=True, use_re
 
 def train_episodes(env, policy, num_episodes, batch_size, learn_rate, semi_grad, use_replay,
                    lr_step_size, lr_gamma, save_q_vals, replay_mem_size):
+    """
+    Trains a network on an environments for num_episodes episodes.
+
+    :param env: The environment on which to train the network.
+    :param policy: The policy to use. This policy must contain the policy network.
+    :param num_episodes: For how many episodes to train.
+    :param batch_size: The size of the training batches.
+    :param learn_rate: The learning rate for Adam
+    :param semi_grad: Whether to use semi-grad or full-grad.
+    :param use_replay: Whether to use memory replay.
+    :param lr_step_size: For the learning rate scheduler. Decay every lr_step_size episodes.
+    :param lr_gamma: The scaling factor for the learning rate scheduler.
+    :param save_q_vals: Whether to save the Q-values. If yes, saves all Q-values for all states after each episode.
+    :param replay_mem_size: The size of the memory replay buffer.
+    :return: The steps it took to complete each episode, the mean loss for each episode, the rewards per episode,
+    and the Q-values of all states after each episode (only if save_q_vals is true).
+    """
+
     policy.train()
     network = policy.network
 
@@ -56,17 +84,19 @@ def train_episodes(env, policy, num_episodes, batch_size, learn_rate, semi_grad,
     q_vals = []
     for i in range(num_episodes):
 
-        network.start_episode(env, policy)
+        network.start_episode(env, policy)  # The network resets the environment and store the current state.
 
         steps = 0
         rewards = 0
         cum_loss = []
         while True:
-            policy.update(global_steps)
+            policy.update(global_steps)  # For the annealing of epsilon in the epsilon greedy policy.
 
-            experience, done = network.step_episode(env, policy)
+            experience, done = network.step_episode(env, policy)  # Take a step.
 
             memory.push(experience)
+
+            # Passes one training batch from the memory buffer through the network and update the weights once.
             loss = train_network(network, memory, optimizer, batch_size, semi_grad)
             if loss:
                 cum_loss.append(loss)

@@ -10,10 +10,11 @@ from .network import Network
 #                                       SARSA networks                                      #
 # ========================================================================================= #
 class SARSANetwork(Network):
-
+    """ Deep SARSA network. Based on the Deep Q Network (DQN)."""
     def __init__(self, in_features=4, out_features=2, architecture=None, discount_factor=0.8):
         nn.Module.__init__(self)
 
+        # If no architecture is provided, create an 'empty' architecture (no hidden layers)
         if architecture is None:
             architecture = []
 
@@ -30,6 +31,7 @@ class SARSANetwork(Network):
         self.discount_factor = discount_factor
 
     def forward(self, x):
+        """ Perform a forward pass. """
         out = self.model.forward(x)
         return out
 
@@ -50,6 +52,7 @@ class SARSANetwork(Network):
         return torch.gather(out, 1, actions)
 
     def compute_v_vals(self, states):
+        """ Not implemented for the Deep SARSA Network. """
         pass
 
     def compute_targets(self, reward=None, next_state=None, next_action=None, done=None, **kwargs):
@@ -76,10 +79,14 @@ class SARSANetwork(Network):
         return reward + adjusted_dones * self.discount_factor * next_q_vals
 
     def start_episode(self, env, policy):
+        """ Resets the environment, store the starting state, and sample a first action such that we have a
+        state-action pair. """
+
         self.state = env.reset()
         self.action = policy.sample_action(self.state)
 
     def step_episode(self, env, policy):
+        """ Take a step using the stored state action pair. Stores the next state-action pair."""
         # Save old variables
         action = self.action
         state = self.state
@@ -96,6 +103,7 @@ class SARSANetwork(Network):
 
     @staticmethod
     def memory_to_input(transitions) -> Dict[str, torch.Tensor]:
+        """ Transforms a training batch to Torch tensors such that they can be used with the network."""
         state, action, reward, next_state, next_action, done = zip(*transitions)
 
         # convert to PyTorch and define types

@@ -8,6 +8,7 @@ import gym
 from ..policies import Policy
 
 class Network(ABC, nn.Module):
+    """ A subclass of Network must implement the following functions. """
     @abstractmethod
     def compute_q_vals(self, states, actions):
         pass
