@@ -221,7 +221,7 @@ def run(env, net, batch_size, discount_factor, semi_gradient, layer, lr, lr_step
     """
 
     # saves the Q values for environments A-Split and N-State Random Walk
-    save_q_vals = env.__name__ in ['ASplit', 'NStateRandomWalk']
+    save_q_vals = env.__name__ in ['ASplit', 'NStepRandomWalk']
     for seed_iter in range(num_runs):
         seed = seed_base + seed_iter # next seed
 

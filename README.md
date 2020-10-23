@@ -11,7 +11,7 @@ In our repository, you will find an implementation for both SARSA and Q-learning
 - `./env.yml` conda environment used for this project.
 - `./experiments_config_*.json` are files which contain the hyperparameters for different experiments.
 - `./run_experiments.py` is the file which is used to fully run one of our experiments.
-- `./show_q_vals.py` is used to ...
+- `./show_q_vals.py` is used to compute the q-MSE per training step for ASplit and 7-Step random walk.
 
 ## Installation instructions
 To run any of our code, install the conda environment as given in `./env.yml` using `conda env create --file env.yml`.

@@ -29,6 +29,7 @@
         0.1
     ],
     "nn_layers": [
+        [],
         [128]
     ],
     "train-episodes": [
