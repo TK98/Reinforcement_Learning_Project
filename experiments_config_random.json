@@ -1,6 +1,6 @@
 {
     "environments": [
-        "NStateRandomWalk"
+        "NStepRandomWalk"
     ],
     "networks": [
         "SARSANetwork",

@@ -114,8 +114,7 @@ class ASplit(OneHotEnv):
         return [seed]
 
 
-# TODO implement this, but with actions...?
-class NStateRandomWalk(OneHotEnv):
+class NStepRandomWalk(OneHotEnv):
     reward_range = (0, 1)
 
     def __init__(self):

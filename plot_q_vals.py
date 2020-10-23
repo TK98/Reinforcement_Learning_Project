@@ -2,11 +2,14 @@ import argparse
 import json
 import pickle
 import numpy as np
-import matplotlib.pyplot as plt
-from aggregate_plots import get_files
+import seaborn as sns
+from aggregate_plots import get_matched_files
 import run_experiments as ex
+import matplotlib.pyplot as plt
+import matplotlib
+import pandas as pd
 
-config_filenames = ['experiments_config_random.json', 'experiments_config_asplit.json']
+config_filenames = ['experiments_config_asplit.json', 'experiments_config_random.json']
 folder = 'saved_experiments'
 
 nonterminal_states = {
@@ -31,14 +34,14 @@ def get_qMSE(data, env_name):
 
     return [val.item() for val in qMSE]
 
-def aggregate(files, env, net, batch_size, discount_factor, semi_gradient, layer, lr, lr_step_size, lr_gamma):
+def aggregate(files, env, net, batch_size, discount_factor, semi_gradient, layer, lr, lr_step_size, lr_gamma, replay_memory):
 
     # we only plot DQN
     if net.__name__ == 'SARSANetwork':
         return
 
     env_name = env.__name__
-    file_name = f"{folder}/{'semi' if semi_gradient else 'full'}/{env_name}/qMSE_{net.__name__}_{batch_size}_{discount_factor}_{semi_gradient}_{lr}_{lr_step_size}_{lr_gamma}_{layer}_NUMEPISODES_*"
+    file_name = f"{folder}/{'semi' if semi_gradient else 'full'}/{env_name}/qMSE_{net.__name__}_{batch_size}_{discount_factor}_{semi_gradient}_{lr}_{lr_step_size}_{lr_gamma}_{layer}_{replay_memory}_NUMEPISODES_*"
     
     qMSE_per_seed = []
     q_vals_per_seed = []
@@ -51,32 +54,32 @@ def aggregate(files, env, net, batch_size, discount_factor, semi_gradient, layer
 
             qMSE_per_seed.append(qMSE)
             q_vals_per_seed.append(non_terminal_last_q_vals.numpy())
+
+    df = pd.DataFrame(qMSE_per_seed).T
+    df.columns = ['semi-gradient' if semi_gradient else 'full-gradient'] * df.shape[1]
     
-    mean_qMSE = np.mean(qMSE_per_seed, axis=0)
-    print(np.std(qMSE_per_seed, axis=0))
-    plt.plot(mean_qMSE, alpha=0.7, label=f"{'semi gradient' if semi_gradient else 'full gradient'}")
+    sns.set_style(style='darkgrid')
+    sns_plot = sns.lineplot(data=df, ci = 80, palette=['orange' if semi_gradient else 'blue'], dashes = False)
+    leg_lines = sns_plot.legend().get_lines()
+    for i in range(len(leg_lines)):
+            marker = ':' if i % 2 == 0 else '-'
+            sns_plot.lines[i].set_linestyle(marker)
+            leg_lines[i].set_linestyle(marker)
+    title = env_name
+    sns_plot.set_title(f'qMSE over training for {title}')
+    sns_plot.set_xlabel("Training episodes")
+    sns_plot.set_ylabel(f'qMSE per episode')
 
-    # format error
-    print(f'\n\nfor {file_name}:')
-    print('State\tTrue\tComputed\tabs(Error):')
-    table_rows = zip(np.mean(q_vals_per_seed, axis=0), true_nonterminal_q_vals[env_name])
-
-    for i, (q_val, true_val) in enumerate(table_rows):
-        print(f"{i}\t{true_val:.2f}\t{q_val:.2f}\t{abs(q_val-true_val):.2f}")
-
-def do_stuff(env, net, batch_size, discount_factor, semi_gradient, layer, lr, lr_step_size, lr_gamma, config):
-    file_name, files = get_files(env, net, batch_size, discount_factor, semi_gradient, layer, lr, lr_step_size, lr_gamma, config)
-    aggregate(files, env, net, batch_size, discount_factor, semi_gradient, layer, lr, lr_step_size, lr_gamma)
+def do_stuff(env, net, batch_size, discount_factor, semi_gradient, layer, lr, lr_step_size, lr_gamma, replay_memory, config):
+    files = get_matched_files(env, net, batch_size, discount_factor, semi_gradient, layer, lr, lr_step_size, lr_gamma, replay_memory, config)
+    aggregate(files, env, net, batch_size, discount_factor, semi_gradient, layer, lr, lr_step_size, lr_gamma, replay_memory)
     
 
+matplotlib.rcParams.update({'font.size': 13})
 
 for config_filename in config_filenames:
     config = ex.load_config(config_filename)
-    ex.do_loop(config, do_stuff)
-    env_name = 'ASplit' if 'A'==config['environments'][0].__name__[0] else 'N-step random walk'
-    plt.title(f"{env_name} Q-MSE over training")
-    plt.legend()
-    plt.xlabel('Training steps')
-    plt.ylabel('Q-MSE')
-    plt.savefig(f"qvals_{config['environments'][0].__name__}.pdf")
-    plt.close()
+    for _ in ex.do_loop(config, do_stuff):
+        pass
+    plt.show()
+    plt.clf()
