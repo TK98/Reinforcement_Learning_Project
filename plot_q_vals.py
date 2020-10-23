@@ -71,6 +71,10 @@ def aggregate(files, env, net, semi_gradient):
     title = env_name
     if title == 'NStepRandomWalk':
         title = '7-step Random Walk'
+    elif title == 'ASplit':
+        title = 'A-Split'
+    else:
+        raise Exception()
     sns_plot.set_title(f'qMSE over training for {title}')
     sns_plot.set_xlabel("Training episodes")
     sns_plot.set_ylabel(f'qMSE per episode')
